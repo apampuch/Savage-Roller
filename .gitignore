@@ -1,0 +1,34 @@
+# Virtual environments
+venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build and packaging
+build/
+dist/
+*.egg-info/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+
+nohup.out
+database.db
