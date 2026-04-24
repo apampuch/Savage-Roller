@@ -1,5 +1,10 @@
 import pprint
 from die_roller import *
+from edges import *
+from typing import Any, Callable
+
+def new_container():
+    return CharacterCardContainer(deck[0], 0)
 
 def get_roll_data(msg):
     roll_data = parse_tokens(msg)
@@ -23,7 +28,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def run_test(func, params, answer):
+def run_test(func: Callable, params: tuple, answer: Callable[[Any], bool]):
     try:
         result = func(*params)
     except Exception as e:
@@ -31,7 +36,7 @@ def run_test(func, params, answer):
 
     # passfail = ''
     
-    if result == answer:
+    if answer(result):
         passfail = f'{bcolors.OKGREEN}PASS!{bcolors.ENDC}'
     else:
         passfail = f'{bcolors.FAIL}FAIL: Correct result is {answer}{bcolors.ENDC}'
@@ -81,7 +86,7 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # pprint.pp(test_roll('4s12w8'))
 # pprint.pp(test_roll('10s12w10t5c6+2-3d6'))
 # pprint.pp(test_roll('3d6-1d4+2d8-4+1d8+1'))
-pprint.pp(test_roll('2n6+1d6'))
+# pprint.pp(test_roll('2n6+1d6'))
 
 # AST Testing
 # print(ASTNode('1d4+6'))
@@ -122,3 +127,37 @@ pprint.pp(test_roll('2n6+1d6'))
 #pprint.pp(test_roll('4e12'))
 #pprint.pp(test_roll('s12w10t5c6+2'))
 #pprint.pp(test_roll('2d4c6'))
+
+# test initiative edges
+
+# deck = ['S5', 'D5']
+# test_container = new_container()
+# run_test(hesitant, (deck, test_container), lambda x: test_container.main_card == 'D5' and test_container.other_cards == ['S5'])
+
+# deck = ['D5', 'S5']
+# test_container = new_container()
+# run_test(hesitant, (deck, test_container), lambda x: test_container.main_card == 'D5' and test_container.other_cards == ['S5'])
+
+# deck = ['BJ', 'D5']
+# test_container = new_container()
+# run_test(hesitant, (deck, test_container), lambda x: test_container.main_card == 'BJ' and test_container.other_cards == ['D5'])
+
+# deck = ['D6', 'D5', 'C4', 'S3', 'H2', 'SA']
+# test_container = new_container()
+# run_test(quick, (deck, test_container), lambda x: test_container.main_card == 'D6' and test_container.other_cards == [])
+
+# deck = ['D5', 'C4', 'S3', 'H2', 'SA']
+# test_container = new_container()
+# run_test(quick, (deck, test_container), lambda x: test_container.main_card == 'SA' and test_container.other_cards == ['D5', 'C4', 'S3', 'H2'])
+
+# deck = ['D5', 'C4', 'S3', 'H2']
+# test_container = new_container()
+# run_test(quick, (deck, test_container), lambda x: test_container.main_card == 'H2' and test_container.other_cards == ['D5', 'C4', 'S3'])
+
+# deck = ['S5', 'D5']
+# test_container = new_container()
+# run_test(levelheaded, (deck, test_container), lambda x: test_container.main_card == 'S5' and test_container.other_cards == ['D5'])
+
+# deck = ['S5', 'D5', 'S6']
+# test_container = new_container()
+# run_test(levelheaded_imp, (deck, test_container), lambda x: test_container.main_card == 'S6' and test_container.other_cards == ['S5', 'D5'])
