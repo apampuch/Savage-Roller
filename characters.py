@@ -5,6 +5,7 @@ import random
 from database import InitiativeList
 from decks import PlayingCardDeck
 from edges import CharacterCardContainer
+from json import loads
 from tabulate import tabulate
 
 VALID_EDGES = set(["hesitant", "quick", "levelheaded",
@@ -60,6 +61,7 @@ def remove_character(name: str, guild: int) -> str:
 def add_edges_to_character(name: str, guild: int, edges_to_add: set[str]) -> str:
     # collision logic
     char_id, current_edges = database.get_edges_and_id(name, guild)
+    current_edges = loads(current_edges)
 
     # allow only edges that actually affect initiative
     invalid_edges = list(edges_to_add - VALID_EDGES)

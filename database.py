@@ -169,7 +169,7 @@ def delete_character(name: str, guild: int):
         raise e
 
 
-def get_edges_and_id(name: str, guild: int) -> tuple[int, list[str]]:
+def get_edges_and_id(name: str, guild: int) -> tuple[int, str]:
     try:
         with conn:
             cur = conn.cursor()
@@ -180,7 +180,7 @@ def get_edges_and_id(name: str, guild: int) -> tuple[int, list[str]]:
                 raise LookupError(f"Character {name} not found on this server.")
         
             edge_res = cur.execute("SELECT edge FROM character_edges WHERE char_id=?", res).fetchall()
-            return res[0], list(map(lambda x: x[0], edge_res))
+            return res[0], res[1]
     except sqlite3.IntegrityError as e:
         raise e
 
