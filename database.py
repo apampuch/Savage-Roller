@@ -63,7 +63,7 @@ cur.execute("""
     CREATE TABLE IF NOT EXISTS characters(
         id INTEGER PRIMARY KEY,
         bennies INTEGER,
-        name TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
         guild INTEGER NOT NULL,
         temp BOOLEAN,
         UNIQUE(name, guild)
@@ -169,7 +169,7 @@ def delete_character(name: str, guild: int):
         raise e
 
 
-def get_edges_and_id(name: str, guild: int) -> tuple[int, str]:
+def get_edges_and_id(name: str, guild: int) -> tuple[int, tuple]:
     try:
         with conn:
             cur = conn.cursor()
@@ -180,7 +180,13 @@ def get_edges_and_id(name: str, guild: int) -> tuple[int, str]:
                 raise LookupError(f"Character {name} not found on this server.")
         
             edge_res = cur.execute("SELECT edge FROM character_edges WHERE char_id=?", res).fetchall()
-            return res[0], res[1]
+
+            # silly array to fix the fact that you will often get nothing from the above query
+            r_tuple = ()
+            if len(edge_res) > 0:
+                r_tuple = edge_res[0]
+
+            return res[0], r_tuple
     except sqlite3.IntegrityError as e:
         raise e
 
@@ -294,10 +300,11 @@ def new_list(guild: int, channel: int):
             # delete any existing initiative in this guild+channel
             cur.execute("DELETE FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel))
 
-            deck = json.dumps(random.shuffle(list(PlayingCardDeck)))
+            deck = list(PlayingCardDeck)
+            random.shuffle(deck)
 
             # actually make the initiative list in the database
-            cur.execute("INSERT INTO initiative_lists (guild, channel, deck, round_count) VALUES (?,?,?,0,0,0)", (guild, channel, deck))
+            cur.execute("INSERT INTO initiative_lists (guild, channel, deck, round_count) VALUES (?,?,?,0)", (guild, channel, json.dumps(deck)))
 
             # fight() will then deal in the cards
     except sqlite3.IntegrityError as e:

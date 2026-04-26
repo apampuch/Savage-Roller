@@ -61,7 +61,6 @@ def remove_character(name: str, guild: int) -> str:
 def add_edges_to_character(name: str, guild: int, edges_to_add: set[str]) -> str:
     # collision logic
     char_id, current_edges = database.get_edges_and_id(name, guild)
-    current_edges = loads(current_edges)
 
     # allow only edges that actually affect initiative
     invalid_edges = list(edges_to_add - VALID_EDGES)
