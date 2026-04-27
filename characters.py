@@ -1,8 +1,8 @@
 import database
+from dataclasses import dataclass, field
 import edges
 import random
 
-from database import InitiativeList
 from decks import PlayingCardDeck
 from edges import CharacterCardContainer
 from json import loads
@@ -21,6 +21,20 @@ EXCLUSIVE_EDGES = {
     "tactician": set(["tactician-imp"]),
     "tactician-imp": set(["tactician"])
 }
+
+@dataclass
+class InitiativeList:
+    deck = list[str]
+    characters: list[Character] = field(default_factory=list)
+
+@dataclass
+class Character:
+    name: str
+    main_card: str
+    bennies: int = 0
+    edges: list[str] = field(default_factory=list)
+    unused_cards: list[str] = field(default_factory=list)
+    tactician_cards: list[str] = field(default_factory=list)
 
 def make_initiative_chart(init_list: InitiativeList) -> str:
     chart: str = ""

@@ -3,7 +3,6 @@ import json
 import random
 import sqlite3
 
-from dataclasses import dataclass, field
 from decks import PlayingCardDeck
 from sys import argv
 
@@ -30,20 +29,6 @@ def exclusivity_check(edge: str, all_edges: set[str]) -> bool:
 
     # if any edges exist in both, return false, else return true
     return not edge_test & dq_edges
-
-@dataclass
-class Character:
-    name: str
-    main_card: str
-    bennies: int = 0
-    edges: list[str] = field(default_factory=list)
-    unused_cards: list[str] = field(default_factory=list)
-    tactician_cards: list[str] = field(default_factory=list)
-
-@dataclass
-class InitiativeList:
-    deck = list[str]
-    characters: list[Character] = field(default_factory=list)
 
 print("Starting DB")
 
