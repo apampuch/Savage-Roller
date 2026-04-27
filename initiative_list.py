@@ -42,16 +42,18 @@ class InitiativeList:
 
         return tabulate(tab_dict, headers="keys", tablefmt="simple_grid")
 
-    def shuffle_deck(self):
-        # do not shuffle cards already out
-        # call this function with everyone in init_list having no cards
-        # to get a clean, full deck
-        cards_already_out = [card for char in self.characters 
-        for card in ([char.main_card] + char.unused_cards + char.tactician_cards)]
+    def shuffle_deck(self, full_shuffle = False):
+        # if full shuffle, shuffle a full new deck of cards
+        # if not, only shuffle from cards that not attached to characters in some way
+        if full_shuffle:
+            self.deck = list(PlayingCardDeck)
+        else:
+            cards_already_out = [card for char in self.characters 
+            for card in ([char.main_card] + char.unused_cards + char.tactician_cards)]
 
-        self.deck = list(set(PlayingCardDeck) - set(cards_already_out))
+            self.deck = list(set(PlayingCardDeck) - set(cards_already_out))
+
         shuffle(self.deck)
-
 
     def draw_card(self):
         # check if we're at the end of the deck
@@ -62,6 +64,10 @@ class InitiativeList:
 
         # pop a card
         return self.deck.pop(0)
+
+    def update_db(self):
+        # TODO call database.update_list and pass more raw values in
+        pass
 
 @dataclass
 class Character:
