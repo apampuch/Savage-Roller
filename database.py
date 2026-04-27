@@ -43,7 +43,8 @@ conn.execute("PRAGMA foreign_keys = ON;")
 cur = conn.cursor()
 
 # characters are per guild
-# temp marks if a character is just a temporary character created ad-hoc and safe to be deleted when its associated initiative is deleted
+# temp marks if a character is just a temporary character created ad-hoc 
+# and is automatically deleted when its associated initiative is deleted
 cur.execute("""
     CREATE TABLE IF NOT EXISTS characters(
         id INTEGER PRIMARY KEY,
@@ -84,6 +85,9 @@ cur.execute("""
         id INTEGER PRIMARY KEY,
         char_id INTEGER NOT NULL,
         init_id INTEGER NOT NULL,
+        main_card TEXT,             -- card actually used for initiative
+        unused_cards TEXT.          -- cards that are "discarded" this round due to edges
+        tactician_cards TEXT,       -- cards that can be assigned through tactician
         FOREIGN KEY(char_id) REFERENCES characters(id) ON DELETE CASCADE,
         FOREIGN KEY(init_id) REFERENCES initiative_lists(id) ON DELETE CASCADE
     );
@@ -222,7 +226,8 @@ def get_initiative_list_and_characters(guild: int, channel: int):
             # TODO test this shit
             # get all of the characters
             character_rows = cur.execute("""
-                SELECT c.name, c.bennies, json_group_array(DISTINCT e.edge) AS edges
+                SELECT c.name, im.main_card, c.bennies, json_group_array(DISTINCT e.edge) AS edges,
+                im.unused_cards, im.tactician_cards
                 FROM initiative_membership im
                 INNER JOIN characters c
                     ON im.char_id = c.id
@@ -231,6 +236,8 @@ def get_initiative_list_and_characters(guild: int, channel: int):
                 GROUP BY c.id
             """, 
             (initiative_list[4])).fetchall()
+
+            return initiative_list, character_rows
     except sqlite3.IntegrityError as e:
         raise e
 
@@ -341,6 +348,7 @@ def delete_from_list(characters: list[str], guild: int, channel: int):
 def update_list(guild: int, channel: int, deck: list[str], round_count: int):
     # changes the deck of an initiative_list
     # usually called after drawing cards or shuffling
+    # TODO make it update characters as well
     try:
         with conn:
             cur = conn.cursor()
