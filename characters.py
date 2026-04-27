@@ -1,12 +1,8 @@
 import database
-from dataclasses import dataclass, field
 import edges
-import random
 
-from decks import PlayingCardDeck
-from edges import CharacterCardContainer
+from initiative_list import Character, InitiativeList
 from json import loads
-from tabulate import tabulate
 
 VALID_EDGES = set(["hesitant", "quick", "levelheaded",
                "levelheaded-imp", "tactician", "tactician-imp"])
@@ -21,58 +17,6 @@ EXCLUSIVE_EDGES = {
     "tactician": set(["tactician-imp"]),
     "tactician-imp": set(["tactician"])
 }
-
-@dataclass
-class InitiativeList:
-    deck = list[str]
-    _characters: list[Character] = field(default_factory=list)
-
-    @property
-    def characters(self):
-        return tuple(self._characters)
-
-    # use these functions to keep shit sorted
-    def add_character(self, char):
-        self._characters.append(char)
-        self._characters = sorted(self._characters, key=lambda x: PlayingCardDeck.index(x.main_card))
-    
-    def remove_character(self, char):
-        self._characters.remove(char)
-
-@dataclass
-class Character:
-    name: str
-    main_card: str
-    bennies: int = 0
-    edges: list[str] = field(default_factory=list)
-    unused_cards: list[str] = field(default_factory=list)
-    tactician_cards: list[str] = field(default_factory=list)
-
-    def insert_into_tabulate(self, tab_dict: dict):
-        tab_dict["Name"].append(self.name)
-        tab_dict["Card"].append(self.main_card)
-        tab_dict["Bennies"].append(self.bennies)
-        tab_dict["Edges"].append(", ".join(self.edges))
-        tab_dict["Unused Cards"].append(", ".join(self.unused_cards))
-        tab_dict["Tactician Cards"].append(", ".join(self.tactician_cards))
-
-def make_initiative_chart(init_list: InitiativeList) -> str:
-    tab_dict = {}
-    for key in ["Name", "Card", "Bennies", "Edges", "Unused Cards", "Tactician Cards"]:
-        tab_dict[key] = []
-
-    for char in init_list.characters:
-        char.insert_into_tabulate(tab_dict)
-
-    # delete any columns with unused values
-    if all(map(lambda c: len(c.edges) == 0, init_list.characters)):
-        del tab_dict["Edges"]
-    if all(map(lambda c: len(c.unused_cards) == 0, init_list.characters)):
-        del tab_dict["Unused Cards"]
-    if all(map(lambda c: len(c.tactician_cards) == 0, init_list.characters)):
-        del tab_dict["Tactician Cards"]
-
-    return tabulate(tab_dict, headers="keys", tablefmt="simple_grid",)
 
 
 def exclusivity_check(edge: str, all_edges: set[str]) -> bool:#
@@ -122,22 +66,59 @@ def add_edges_to_character(name: str, guild: int, edges_to_add: set[str]) -> str
 
     return message
 
+
 def remove_edges_from_character(name: str, guild: int, edges: list[str]):
     database.delete_edges_from_character(name, guild, edges)
     return f"Deleted {", ".join(edges)} from {name}"
 
+def get_init_list(guild: int, channel: int) -> InitiativeList:
+    init_row, char_rows = database.get_initiative_list_and_characters(guild, channel)
 
-def shuffle_deck(deck: list[str]):
-    pass
+    # make character and init list objects
+    init_list = InitiativeList(
+        _characters=[],
+        deck=init_row[0],
+        round_count=init_row[1]
+    )
+
+    for row in char_rows:
+        init_list._characters.append(
+            Character(
+                name=row[0],
+                main_card=row[1],
+                bennies=row[2],
+                edges=loads(row[3]),
+                unused_cards=loads(row[4]),
+                tactician_cards=loads(row[5])
+            )
+        )
+    # sort the characters because we're adding several manually
+    # do not add characters like this btw
+    # I can do it because I'm smart and special and you're not
+    init_list.sort_characters()
+    
+    return init_list
 
 
-def deal_cards():
-    pass
+def fight(guild: int, channel: int, characters) -> str:
+    # make a new list
+    database.new_list(guild, channel)
+
+    # add characters to it
+    database.insert_into_list(characters, guild, channel)
+
+    # deal cards to each character
+    next_round(guild, channel)
+
+    if len(characters > 0):
+        return get_init_list(guild, channel).make_initiative_chart()
+    else:
+        return "Made empty iniative. Add some characters."
 
 
-def draw_cards(deck: list[str], char):
-    pass
+def deal_card_to_character(init_list: InitiativeList, char: Character):
     # draw one card
+    char.main_card = init_list.draw_card()
 
     '''
     How the order of operations of all edges/hindrances works:
@@ -148,36 +129,49 @@ def draw_cards(deck: list[str], char):
     Level headed takes priority. If found, it doesn't perform quick.
     *maybe* it warns the user if a character has both quick and level headed, and draws at least one card below 6, and tells them to manually use /choose_card and /quick_redraw
 
+    Level headed overrules quick because you might want to take a lower card and try to use Quick on that.
+    That can be done manually with the 
+
     Do tactician no matter what.
 
     Only do improved, don't do both improved and regular.
     '''
 
-    # if 'hesitant' in char.edges:
-    #     edges.hesitant(deck, char.card, init_list.total_drawn)
-    # else:
-    #     if 'levelheaded-imp' in char.edges:
-    #         edges.levelheaded_imp(deck, char.card, init_list.total_drawn)
-    #     elif 'levelheaded' in char.edges:
-    #         edges.levelheaded(deck, char.card, init_list.total_drawn)
-    #     elif 'quick' in char.edges:
-    #         edges.quick(deck, char.card, init_list.total_drawn)
+    if 'hesitant' in char.edges:
+        edges.hesitant(init_list, char)
+    else:
+        if 'levelheaded-imp' in char.edges:
+            edges.levelheaded_imp(init_list, char)
+        elif 'levelheaded' in char.edges:
+            edges.levelheaded(init_list, char)
+        # there may be an issue where you can draw an empty deck with the quick edge
+        elif 'quick' in char.edges:
+            edges.quick(init_list, char)
     
-    # if 'tactician-imp' in char.edges:
-    #         edges.tactician_imp(deck, char.card, init_list.total_drawn)
-    # elif 'tactician' in char.edges:
-    #     edges.tactician(deck, char.card, init_list.total_drawn)
+    if 'tactician-imp' in char.edges:
+        edges.tactician_imp(init_list, char)
+    elif 'tactician' in char.edges:
+        edges.tactician(init_list, char)
 
 
 def next_round(guild: int, channel: int):
-    pass
+    init_list = get_init_list(guild, channel)
 
-def fight(guild: int, channel: int):
-    pass
+    # check if a joker was drawn last round
+    last_round_cards = [card for char in init_list.characters
+    for card in ([char.main_card] + char.unused_cards + char.tactician_cards)]
+
+    # shuffle if it was
+    if "RJ" in last_round_cards or "BJ" in last_round_cards:
+        init_list.shuffle_deck(full_shuffle=True)
+
+    for char in init_list.characters:
+        deal_card_to_character(init_list, char)
+
 
 def add_to_initiative(characters: list[str], guild: int, channel: int):
-    pass
+    init_list = get_init_list(guild, channel)
 
 
 def remove_from_initiative(characters: list[str], guild: int, channel: int):
-    pass
+    init_list = get_init_list(guild, channel)
