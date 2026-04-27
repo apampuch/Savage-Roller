@@ -2,6 +2,9 @@
 
 I.O.U. one documentation
 
+# Requirements
+py-cord, tabulate, dotenv
+
 # Characters
 Characters are per server. You can store initiative-relevant edges on characters.
 
