@@ -345,15 +345,34 @@ def delete_from_list(characters: list[str], guild: int, channel: int):
         raise e
 
 
-def update_list(guild: int, channel: int, deck: list[str], round_count: int):
+def update_list(character_info: list[list], guild: int, channel: int, deck: list[str], round_count: int):
     # changes the deck of an initiative_list
     # usually called after drawing cards or shuffling
-    # TODO make it update characters as well
+
+    # character info is a list with list of the following, in order:
+    # bennies, main_card, unused_cards, tactician_cards, name
+    # unused_cards and tactician_cards must be converted to json with dumps
+
     try:
         with conn:
             cur = conn.cursor()
+
+            # update the list itself
             cur.execute("UPDATE initiative_lists SET deck=?, round_count=? WHERE guild=? AND channel=? LIMIT 1", (json.dumps(deck), round_count, guild, channel)).fetchone()
+
             if cur.rowcount == 0:
                 raise LookupError(f"No fight in this channel.")
+            else:
+                # fix character info
+                for info in character_info:
+                    info.append(guild)
+                    info.append(channel)
+
+                # update characters
+                cur.executemany("""
+                    UPDATE characters 
+                    SET bennies=?, main_card=?, unused_cards=?, tactician_cards=?
+                    WHERE name=? AND guilf=? AND channel=? LIMIT 1
+                """, character_info)
     except sqlite3.IntegrityError as e:
         raise e

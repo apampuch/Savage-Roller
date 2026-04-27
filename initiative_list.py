@@ -1,3 +1,6 @@
+import json
+import database
+
 from dataclasses import dataclass, field
 from decks import PlayingCardDeck
 from tabulate import tabulate
@@ -65,9 +68,27 @@ class InitiativeList:
         # pop a card
         return self.deck.pop(0)
 
-    def update_db(self):
-        # TODO call database.update_list and pass more raw values in
-        pass
+    def update_db(self, guild, channel):
+        # build character info list
+        character_info = []
+        # character info is a list with list of the following, in order:
+        # bennies, main_card, unused_cards, tactician_cards, name
+        # unused_cards and tactician_cards must be converted to json with dumps
+        for char in self.characters:
+            info = []
+
+            info.append(char.bennies)
+            info.append(char.main_card)
+            info.append(json.dumps(char.unused_cards))
+            info.append(json.dumps(char.tactician_cards))
+            info.append(char.name)
+            info.append(guild)
+            info.append(channel)
+
+            character_info.append(info)
+
+
+        database.update_list(character_info, guild, channel, self.deck, self.round_count)
 
 @dataclass
 class Character:

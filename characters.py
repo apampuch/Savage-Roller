@@ -2,7 +2,7 @@ import database
 import edges
 
 from initiative_list import Character, InitiativeList
-from json import loads
+from json import dumps, loads
 
 VALID_EDGES = set(["hesitant", "quick", "levelheaded",
                "levelheaded-imp", "tactician", "tactician-imp"])
@@ -167,6 +167,8 @@ def next_round(guild: int, channel: int):
 
     for char in init_list.characters:
         deal_card_to_character(init_list, char)
+
+    init_list.update_db(guild, channel)
 
 
 def add_to_initiative(characters: list[str], guild: int, channel: int):
