@@ -86,7 +86,7 @@ cur.execute("""
         char_id INTEGER NOT NULL,
         init_id INTEGER NOT NULL,
         main_card TEXT,             -- card actually used for initiative
-        unused_cards TEXT.          -- cards that are "discarded" this round due to edges
+        unused_cards TEXT,          -- cards that are "discarded" this round due to edges
         tactician_cards TEXT,       -- cards that can be assigned through tactician
         FOREIGN KEY(char_id) REFERENCES characters(id) ON DELETE CASCADE,
         FOREIGN KEY(init_id) REFERENCES initiative_lists(id) ON DELETE CASCADE
