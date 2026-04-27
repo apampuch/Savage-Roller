@@ -25,7 +25,19 @@ EXCLUSIVE_EDGES = {
 @dataclass
 class InitiativeList:
     deck = list[str]
-    characters: list[Character] = field(default_factory=list)
+    _characters: list[Character] = field(default_factory=list)
+
+    @property
+    def characters(self):
+        return tuple(self._characters)
+
+    # use these functions to keep shit sorted
+    def add_character(self, char):
+        self._characters.append(char)
+        self._characters = sorted(self._characters, key=lambda x: PlayingCardDeck.index(x.main_card))
+    
+    def remove_character(self, char):
+        self._characters.remove(char)
 
 @dataclass
 class Character:
@@ -36,24 +48,34 @@ class Character:
     unused_cards: list[str] = field(default_factory=list)
     tactician_cards: list[str] = field(default_factory=list)
 
+    def insert_into_tabulate(self, tab_dict: dict):
+        tab_dict["Name"].append(self.name)
+        tab_dict["Card"].append(self.main_card)
+        tab_dict["Bennies"].append(self.bennies)
+        tab_dict["Edges"].append(", ".join(self.edges))
+        tab_dict["Unused Cards"].append(", ".join(self.unused_cards))
+        tab_dict["Tactician Cards"].append(", ".join(self.tactician_cards))
+
 def make_initiative_chart(init_list: InitiativeList) -> str:
-    chart: str = ""
-    table_headers = ["Name", "Bennies", "Card"]
+    tab_dict = {}
+    for key in ["Name", "Card", "Bennies", "Edges", "Unused Cards", "Tactician Cards"]:
+        tab_dict[key] = []
 
-    # append edges, tactician cards, unused cards if anyone has those
-    if False:
-        table_headers.append("Edges")
+    for char in init_list.characters:
+        char.insert_into_tabulate(tab_dict)
 
-    if False:
-        table_headers.append("Tactician Cards")
+    # delete any columns with unused values
+    if all(map(lambda c: len(c.edges) == 0, init_list.characters)):
+        del tab_dict["Edges"]
+    if all(map(lambda c: len(c.unused_cards) == 0, init_list.characters)):
+        del tab_dict["Unused Cards"]
+    if all(map(lambda c: len(c.tactician_cards) == 0, init_list.characters)):
+        del tab_dict["Tactician Cards"]
 
-    if False:
-        table_headers.append("Unused Cards")
-
-    return chart
+    return tabulate(tab_dict, headers="keys", tablefmt="simple_grid",)
 
 
-def exclusivity_check(edge: str, all_edges: set[str]) -> bool:
+def exclusivity_check(edge: str, all_edges: set[str]) -> bool:#
     # remove edge from all edges
     edge_test = all_edges - set([edge])
     

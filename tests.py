@@ -1,4 +1,7 @@
 import pprint
+import characters
+import database
+
 from die_roller import *
 from edges import *
 from typing import Any, Callable
@@ -161,3 +164,60 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # deck = ['S5', 'D5', 'S6']
 # test_container = new_container()
 # run_test(levelheaded_imp, (deck, test_container), lambda x: test_container.main_card == 'S6' and test_container.other_cards == ['S5', 'D5'])
+
+# database tests
+# characters.add_character("Johnny Test", 123)
+# print(characters.add_edges_to_character("Johnny Test", 123, set(["hesitant", "Good at Killing"])))
+# print(characters.add_edges_to_character("Johnny Test", 123, set(["quick"])))
+# print(characters.add_edges_to_character("Johnny Test", 123, set(["tactician", "tactician-imp"])))
+# print(characters.add_edges_to_character("Johnny Test", 123, set(["tactician"])))
+# print(characters.add_edges_to_character("Johnny Test", 123, set(["tactician-imp"])))
+
+# print(characters.remove_edges_from_character("Johnny Test", 123, ["quick"]))
+
+# test that we can create an initiative list at all
+# characters.add_character("Not In This Guild", 999)
+# characters.add_character("Joe Tactician", 123)
+# characters.add_character("Billy Quick", 123)
+# characters.add_character("Mindy Slow", 123)
+# characters.add_character("Teddy Steady", 123)
+# characters.add_character("Andrew Everything", 123)
+
+# characters.add_edges_to_character("Joe Tactician", 123, set(["tactician"]))
+# characters.add_edges_to_character("Billy Quick", 123, set(["quick"]))
+# characters.add_edges_to_character("Mindy Slow", 123, set(["hesitant"]))
+# characters.add_edges_to_character("Teddy Steady", 123, set(["levelheaded"]))
+# characters.add_edges_to_character("Andrew Everything", 123, set(["tactician-imp", "quick", "levelheaded-imp"]))
+
+# characters.add_character("Mooks", 123, True)
+
+# test that deleting an initiative list deletes temporary character
+# test that creating an initiative list in a channel where one exists deletes the already existing one
+
+# database.new_list(123, 0)
+# database.insert_into_list(["Johnny Test", "Mooks"], 123, 0)
+
+# database.new_list(123, 0)
+# database.insert_into_list(["Billy Quick", "Redshirts"], 123, 0)
+
+# test creating a temp character in two lists, then deleting only one list, ensuring that the temporary character remains
+# database.new_list(123, 0)
+# database.insert_into_list(["Johnny Test", "Mooks"], 123, 0)
+# database.new_list(456, 0)
+# database.insert_into_list(["Johnny Test", "Mooks"], 456, 0)
+# database.new_list(123, 0)
+# database.insert_into_list(["Billy Quick", "Redshirts"], 123, 0)
+
+# test tabulation
+char_list = [
+    characters.Character("Test Johnson", "AS", 0, ["A Big Idiot", "Cracksmoker"]), 
+    characters.Character("Joe Mook", "2C", 0, unused_cards=["ZZ, AB"]), 
+    characters.Character("Ron Redshirt", "AH", 0)
+    ]
+init_list = characters.InitiativeList(char_list)
+
+print(characters.make_initiative_chart(init_list))
+
+# test all edges
+# database.new_list(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0)
+# database.delete_list(123,0)
