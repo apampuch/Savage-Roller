@@ -71,16 +71,20 @@ def remove_edges_from_character(name: str, guild: int, edges: list[str]):
     database.delete_edges_from_character(name, guild, edges)
     return f"Deleted {", ".join(edges)} from {name}"
 
-def get_init_list(guild: int, channel: int) -> InitiativeList:
+
+def get_init_list(guild: int, channel: int, sort_init=True) -> InitiativeList:
     init_row, char_rows = database.get_initiative_list_and_characters(guild, channel)
 
     # make character and init list objects
     init_list = InitiativeList(
         _characters=[],
-        deck=init_row[0],
+        deck=loads(init_row[0]),
         round_count=init_row[1]
     )
 
+    # sort the characters after because we're adding several manually
+    # do not add characters like this btw
+    # I can do it because I'm smart and special and you're not
     for row in char_rows:
         init_list._characters.append(
             Character(
@@ -88,19 +92,20 @@ def get_init_list(guild: int, channel: int) -> InitiativeList:
                 main_card=row[1],
                 bennies=row[2],
                 edges=loads(row[3]),
-                unused_cards=loads(row[4]),
-                tactician_cards=loads(row[5])
+                unused_cards=loads(row[4]) if row[4] is not None else [],
+                tactician_cards=loads(row[5]) if row[4] is not None else []
             )
         )
-    # sort the characters because we're adding several manually
-    # do not add characters like this btw
-    # I can do it because I'm smart and special and you're not
-    init_list.sort_characters()
+
+    # note that in several cases we don't want to sort the characters
+    # such as when we're getting an init list that hasn't been dealt yet
+    if sort_init:
+        init_list.sort_characters()
     
     return init_list
 
 
-def fight(guild: int, channel: int, characters) -> str:
+def fight(guild: int, channel: int, characters: list[str]) -> str:
     # make a new list
     database.new_list(guild, channel)
 
@@ -110,7 +115,7 @@ def fight(guild: int, channel: int, characters) -> str:
     # deal cards to each character
     next_round(guild, channel)
 
-    if len(characters > 0):
+    if len(characters) > 0:
         return get_init_list(guild, channel).make_initiative_chart()
     else:
         return "Made empty iniative. Add some characters."
@@ -155,7 +160,7 @@ def deal_card_to_character(init_list: InitiativeList, char: Character):
 
 
 def next_round(guild: int, channel: int):
-    init_list = get_init_list(guild, channel)
+    init_list = get_init_list(guild, channel, sort_init=False)
 
     # check if a joker was drawn last round
     last_round_cards = [card for char in init_list.characters

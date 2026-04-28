@@ -29,21 +29,21 @@ class InitiativeList:
 
     def make_initiative_chart(self) -> str:
         tab_dict = {}
-        for key in ["Name", "Card", "Bennies", "Edges", "Unused Cards", "Tactician Cards"]:
+        for key in ["Name", "Card", "Bennies", "Edges", "Unused", "Tactician"]:
             tab_dict[key] = []
 
         for char in self.characters:
             char.insert_into_tabulate(tab_dict)
 
         # delete any columns with unused values
-        if all(map(lambda c: len(c.edges) == 0, self.characters)):
+        if True: # all(map(lambda c: len(c.edges) == 0, self.characters)):
             del tab_dict["Edges"]
         if all(map(lambda c: len(c.unused_cards) == 0, self.characters)):
             del tab_dict["Unused Cards"]
         if all(map(lambda c: len(c.tactician_cards) == 0, self.characters)):
             del tab_dict["Tactician Cards"]
 
-        return tabulate(tab_dict, headers="keys", tablefmt="simple_grid")
+        return tabulate(tab_dict, headers="keys", tablefmt="simple")
 
     def shuffle_deck(self, full_shuffle = False):
         # if full shuffle, shuffle a full new deck of cards
@@ -72,23 +72,21 @@ class InitiativeList:
         # build character info list
         character_info = []
         # character info is a list with list of the following, in order:
-        # bennies, main_card, unused_cards, tactician_cards, name
+        # name, main_card, unused_cards, tactician_cards
         # unused_cards and tactician_cards must be converted to json with dumps
+        names = []
         for char in self.characters:
             info = []
 
-            info.append(char.bennies)
+            names.append(char.name)
             info.append(char.main_card)
             info.append(json.dumps(char.unused_cards))
             info.append(json.dumps(char.tactician_cards))
-            info.append(char.name)
-            info.append(guild)
-            info.append(channel)
 
             character_info.append(info)
 
 
-        database.update_list(character_info, guild, channel, self.deck, self.round_count)
+        database.update_list(names, character_info, guild, channel, self.deck, self.round_count)
 
 @dataclass
 class Character:
@@ -104,5 +102,5 @@ class Character:
         tab_dict["Card"].append(self.main_card)
         tab_dict["Bennies"].append(self.bennies)
         tab_dict["Edges"].append(", ".join(self.edges))
-        tab_dict["Unused Cards"].append(", ".join(self.unused_cards))
-        tab_dict["Tactician Cards"].append(", ".join(self.tactician_cards))
+        tab_dict["Unused"].append(", ".join(self.unused_cards))
+        tab_dict["Tactician"].append(", ".join(self.tactician_cards))

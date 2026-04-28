@@ -176,6 +176,7 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # print(characters.remove_edges_from_character("Johnny Test", 123, ["quick"]))
 
 # test that we can create an initiative list at all
+# characters.add_character("Johnny Test", 123)
 # characters.add_character("Not In This Guild", 999)
 # characters.add_character("Joe Tactician", 123)
 # characters.add_character("Billy Quick", 123)
@@ -209,15 +210,17 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # database.insert_into_list(["Billy Quick", "Redshirts"], 123, 0)
 
 # test tabulation
-char_list = [
-    characters.Character("Test Johnson", "AS", 0, ["A Big Idiot", "Cracksmoker"]), 
-    characters.Character("Joe Mook", "2C", 0, unused_cards=["ZZ, AB"]), 
-    characters.Character("Ron Redshirt", "AH", 0)
-    ]
-init_list = characters.InitiativeList(char_list)
+# char_list = [
+#     characters.Character("Test Johnson", "AS", 0, ["A Big Idiot", "Cracksmoker"]), 
+#     characters.Character("Joe Mook", "2C", 0, unused_cards=["ZZ, AB"]), 
+#     characters.Character("Ron Redshirt", "AH", 0)
+#     ]
+# init_list = characters.InitiativeList(list(PlayingCardDeck), char_list)
 
-print(characters.make_initiative_chart(init_list))
+# print(init_list.make_initiative_chart())
 
 # test all edges
 # database.new_list(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0)
 # database.delete_list(123,0)
+
+print(characters.fight(123, 0, ["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"]))

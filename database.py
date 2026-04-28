@@ -48,7 +48,7 @@ cur = conn.cursor()
 cur.execute("""
     CREATE TABLE IF NOT EXISTS characters(
         id INTEGER PRIMARY KEY,
-        bennies INTEGER,
+        bennies INTEGER DEFAULT 0,
         name TEXT NOT NULL,
         guild INTEGER NOT NULL,
         temp BOOLEAN,
@@ -221,21 +221,29 @@ def get_initiative_list_and_characters(guild: int, channel: int):
         with conn:
             cur = conn.cursor()
 
-            initiative_list = cur.execute("SELECT deck, round_count FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()  
+            initiative_list = cur.execute("SELECT deck, round_count, id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()  
 
             # TODO test this shit
             # get all of the characters
+            # character_rows = cur.execute("""
+            #     SELECT im.main_card FROM initiative_membership im WHERE im.init_id=?
+            # """,
+            # (initiative_list[2],)).fetchall()
             character_rows = cur.execute("""
-                SELECT c.name, im.main_card, c.bennies, json_group_array(DISTINCT e.edge) AS edges,
+                SELECT c.name, im.main_card, c.bennies,
+                COALESCE(
+                    json_group_array(DISTINCT e.edge)
+                    FILTER (WHERE e.edge IS NOT NULL), '[]'
+                ) AS edges,
                 im.unused_cards, im.tactician_cards
                 FROM initiative_membership im
                 INNER JOIN characters c
                     ON im.char_id = c.id
                 LEFT JOIN character_edges e ON c.id = e.char_id
                 WHERE im.init_id=?
-                GROUP BY c.id
-            """, 
-            (initiative_list[4])).fetchall()
+                GROUP BY c.id;
+            """,
+            (initiative_list[2],)).fetchall()
 
             return initiative_list, character_rows
     except sqlite3.IntegrityError as e:
@@ -345,12 +353,12 @@ def delete_from_list(characters: list[str], guild: int, channel: int):
         raise e
 
 
-def update_list(character_info: list[list], guild: int, channel: int, deck: list[str], round_count: int):
+def update_list(character_names: list[str], character_info: list[list], guild: int, channel: int, deck: list[str], round_count: int):
     # changes the deck of an initiative_list
     # usually called after drawing cards or shuffling
 
     # character info is a list with list of the following, in order:
-    # bennies, main_card, unused_cards, tactician_cards, name
+    # name, guild, channel, main_card, unused_cards, tactician_cards
     # unused_cards and tactician_cards must be converted to json with dumps
 
     try:
@@ -358,21 +366,37 @@ def update_list(character_info: list[list], guild: int, channel: int, deck: list
             cur = conn.cursor()
 
             # update the list itself
-            cur.execute("UPDATE initiative_lists SET deck=?, round_count=? WHERE guild=? AND channel=? LIMIT 1", (json.dumps(deck), round_count, guild, channel)).fetchone()
+            init_list_id = cur.execute("""
+                UPDATE initiative_lists SET deck=?, round_count=? WHERE guild=? AND channel=? RETURNING id;
+            """, (json.dumps(deck), round_count, guild, channel)).fetchone()
 
             if cur.rowcount == 0:
                 raise LookupError(f"No fight in this channel.")
             else:
-                # fix character info
-                for info in character_info:
-                    info.append(guild)
-                    info.append(channel)
+                # get all character ids
+                char_id_getters = [ [x, guild] for x in character_names ]
 
-                # update characters
+                char_ids = []
+                for name, guild in char_id_getters:
+                    rows = cur.execute("""
+                        SELECT id FROM characters
+                        WHERE name=? AND guild=?
+                    """, (name, guild)).fetchall()
+                    char_ids.extend(rows)
+
+                # append ids to character_info
+                if len(char_ids) != len(character_info):
+                    raise ValueError("Length of char_ids not equal to length of character_info!")
+
+                for i in range(0, len(character_info)):
+                    character_info[i].append(char_ids[i][0])
+                    character_info[i].append(init_list_id[0])
+
+                # update all initiative memberships
                 cur.executemany("""
-                    UPDATE characters 
-                    SET bennies=?, main_card=?, unused_cards=?, tactician_cards=?
-                    WHERE name=? AND guilf=? AND channel=? LIMIT 1
+                    UPDATE initiative_membership
+                    SET main_card=?, unused_cards=?, tactician_cards=?
+                    WHERE char_id=? AND init_id=?
                 """, character_info)
     except sqlite3.IntegrityError as e:
         raise e
