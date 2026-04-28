@@ -36,7 +36,7 @@ class InitiativeList:
             char.insert_into_tabulate(tab_dict)
 
         # delete any columns with unused values
-        if True: # all(map(lambda c: len(c.edges) == 0, self.characters)):
+        if all(map(lambda c: len(c.edges) == 0, self.characters)):
             del tab_dict["Edges"]
         if all(map(lambda c: len(c.unused_cards) == 0, self.characters)):
             del tab_dict["Unused Cards"]
