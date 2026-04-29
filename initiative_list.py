@@ -2,7 +2,7 @@ import json
 import database
 
 from dataclasses import dataclass, field
-from decks import PlayingCardDeck
+from decks import PlayingCardDeck, char_to_symbol
 from tabulate import tabulate
 from random import shuffle
 
@@ -99,8 +99,8 @@ class Character:
 
     def insert_into_tabulate(self, tab_dict: dict):
         tab_dict["Name"].append(self.name)
-        tab_dict["Card"].append(self.main_card)
+        tab_dict["Card"].append(char_to_symbol(self.main_card))
         tab_dict["Bennies"].append(self.bennies)
         tab_dict["Edges"].append(", ".join(self.edges))
-        tab_dict["Unused"].append(", ".join(self.unused_cards))
-        tab_dict["Tactician"].append(", ".join(self.tactician_cards))
+        tab_dict["Unused"].append(", ".join(map(char_to_symbol, self.unused_cards)))
+        tab_dict["Tactician"].append(", ".join(map(char_to_symbol, self.tactician_cards)))
