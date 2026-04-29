@@ -250,8 +250,28 @@ def choose_card(name: str, card: str, guild: int, channel: int) -> str:
     else:
         return f"Could not find card {char_to_symbol(card)} in {name}'s unused cards."
 
-def assign_tactician_card(tactician_char: str, card_value: str, recipient_char: str, guild: int, channel: int) -> str:
-    pass
+def assign_tactician_card(tactician_name: str, card: str, recipient_name: str, guild: int, channel: int) -> str:
+    init_list = get_init_list(guild, channel, False)
+
+    tactician_char: Character | None = next((char for char in init_list.characters if char.name == tactician_name), None)    
+    recipient_char: Character | None = next((char for char in init_list.characters if char.name == recipient_name), None)
+
+    if tactician_char == None and recipient_char == None:
+        return f"Could not find character with name {tactician_name} nor {recipient_name}."
+    elif tactician_char == None:
+        return f"Could not find character with name {tactician_name}."
+    elif recipient_char == None:
+        return f"Could not find character with name {recipient_name}."
+
+    if card in tactician_char.tactician_cards:
+        tactician_char.tactician_cards.remove(card)
+        recipient_char.unused_cards.append(recipient_char.main_card)
+        recipient_char.main_card = card
+
+        init_list.sort_characters()
+        return init_list.make_initiative_chart()
+    else:
+        return f"Could not find card {char_to_symbol(card)} in {tactician_name}'s tactician cards."
 
 def quick_redraw(name: str, guild: int, channel: int) -> str:
     init_list = get_init_list(guild, channel, False)
