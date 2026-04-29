@@ -39,9 +39,9 @@ class InitiativeList:
         if all(map(lambda c: len(c.edges) == 0, self.characters)):
             del tab_dict["Edges"]
         if all(map(lambda c: len(c.unused_cards) == 0, self.characters)):
-            del tab_dict["Unused Cards"]
+            del tab_dict["Unused"]
         if all(map(lambda c: len(c.tactician_cards) == 0, self.characters)):
-            del tab_dict["Tactician Cards"]
+            del tab_dict["Tactician"]
 
         return tabulate(tab_dict, headers="keys", tablefmt="simple")
 

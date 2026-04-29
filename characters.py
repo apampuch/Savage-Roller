@@ -105,7 +105,7 @@ def get_init_list(guild: int, channel: int, sort_init=True) -> InitiativeList:
     return init_list
 
 
-def fight(guild: int, channel: int, characters: list[str]) -> str:
+def fight(characters: list[str], guild: int, channel: int) -> str:
     # make a new list
     database.new_list(guild, channel)
 
@@ -177,8 +177,7 @@ def next_round(guild: int, channel: int):
 
 
 def add_to_initiative(characters: list[str], guild: int, channel: int):
-    init_list = get_init_list(guild, channel)
-
+    return database.insert_into_list(characters, guild, channel)
 
 def remove_from_initiative(characters: list[str], guild: int, channel: int):
-    init_list = get_init_list(guild, channel)
+    return database.delete_from_list(characters, guild, channel)

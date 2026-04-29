@@ -118,6 +118,24 @@ cur.execute("""
     END;
 """)
 
+# a similar trigger for when temporary character initiative memberships are deleted
+cur.execute("""
+    CREATE TRIGGER IF NOT EXISTS delete_temp_characters_after_initiative_membership_delete
+    BEFORE DELETE ON initiative_membership
+    FOR EACH ROW
+    BEGIN
+        DELETE FROM characters
+        WHERE id = OLD.char_id
+        AND temp = 1
+        AND NOT EXISTS (
+            SELECT 1
+            FROM initiative_membership im2
+            WHERE im2.char_id = characters.id
+            AND im2.init_id != OLD.init_id
+        );
+    END;
+""")
+
 conn.commit()
 cur.close()
 
@@ -255,11 +273,12 @@ Helper function that gets characters and makes temporary characters out of chara
 This is used when creating a new initiative.
 Temporary characters are deleted from the database when an initiative ends.
 '''
-def get_characters_and_make_temporary_characters(characters: list[str], guild: int):
+def get_characters(characters: list[str], guild: int, make_temp_chars:bool = True):
     try:
         with conn:
             cur = conn.cursor()
             # lookup characters that already exist from our list
+            # TODO make this more secure
             placeholders = ", ".join("?" * len(characters))
             char_res = cur.execute(f"SELECT id, name FROM characters WHERE name IN ({placeholders}) AND guild=?", characters + [guild]).fetchall()
 
@@ -268,7 +287,7 @@ def get_characters_and_make_temporary_characters(characters: list[str], guild: i
 
             missing_chars = set(characters) - set(found_chars)
 
-            if len(missing_chars) > 0:
+            if make_temp_chars and len(missing_chars) > 0:
                 # make a temporary character for each character that isn't defined in the db
                 temp_chars = []
                 for char in missing_chars:
@@ -280,11 +299,10 @@ def get_characters_and_make_temporary_characters(characters: list[str], guild: i
                 cur.executemany("INSERT INTO characters (name, guild, temp) VALUES (?, ?, ?)", temp_chars)
                 missing_res = cur.execute(f"SELECT id, name FROM characters WHERE name IN ({placeholders}) AND guild=?", list(missing_chars) + [guild]).fetchall()
 
-                # add temp characters to lists
-                found_chars += list(map(lambda x: x[1], missing_res))
+                # add temp characters to list
                 found_ids += list(map(lambda x: x[0], missing_res))
 
-            return found_chars, found_ids
+            return found_ids
     except sqlite3.IntegrityError as e:
         raise e
 
@@ -332,7 +350,7 @@ def insert_into_list(characters: list[str], guild: int, channel: int):
                 raise LookupError(f"No fight in this channel.")
             
             # get characters and their ids
-            found_chars, found_ids = get_characters_and_make_temporary_characters(characters, guild)
+            found_ids = get_characters(characters, guild)
 
             rows = [(char_id, cur.lastrowid) for char_id in found_ids]
 
@@ -340,6 +358,7 @@ def insert_into_list(characters: list[str], guild: int, channel: int):
 
     except sqlite3.IntegrityError as e:
         raise e
+
 
 def delete_from_list(characters: list[str], guild: int, channel: int):
     try:
@@ -349,6 +368,13 @@ def delete_from_list(characters: list[str], guild: int, channel: int):
             res = cur.execute("SELECT id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()
             if res is None:
                 raise LookupError(f"No fight in this channel.")
+
+            init_id = res[0]
+
+            found_ids = get_characters(characters, guild)
+
+            for char_id in found_ids:
+                cur.execute("DELETE FROM initiative_membership WHERE char_id=? AND init_id=?", (char_id, init_id))            
     except sqlite3.IntegrityError as e:
         raise e
 

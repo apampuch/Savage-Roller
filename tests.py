@@ -223,4 +223,8 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # database.new_list(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0)
 # database.delete_list(123,0)
 
-print(characters.fight(123, 0, ["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"]))
+print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
+
+print(characters.fight(["Mooks"], 123, 1))
+characters.remove_from_initiative(["Mooks"], 123, 1)
+characters.remove_from_initiative(["Mooks"], 123, 0)
