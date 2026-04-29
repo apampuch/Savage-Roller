@@ -38,6 +38,10 @@ def remove_character(name: str, guild: int) -> str:
     return database.delete_character(name, guild)
 
 
+def rename_character(old_name: str, new_name: str, guild: int) -> str:
+    return database.change_char_name(old_name, new_name, guild)
+
+
 def add_edges_to_character(name: str, guild: int, edges_to_add: set[str]) -> str:
     # collision logic
     char_id, current_edges = database.get_edges_and_id(name, guild)
