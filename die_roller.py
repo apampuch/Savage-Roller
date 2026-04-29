@@ -102,9 +102,9 @@ def parse_tokens(roll_string: str) -> RollData:
     roll_data = RollData()    
     mode        = '+'     # can only be '+' or '-'
                             # when this changes, we consume
-    left:int        = None
-    operator:str    = None
-    right:int       = None
+    left:int        = None  # type: ignore
+    operator:str    = None  # type: ignore
+    right:int       = None  # type: ignore
 
     def consume():
         nonlocal left, operator, right
@@ -136,7 +136,7 @@ def parse_tokens(roll_string: str) -> RollData:
                 raise ValueError(f'Bad consume: {left}{operator}{right}')
             
             # set dice, deal with negative
-            dice = None
+            dice = []
             if isinstance(left, int) and isinstance(right, int):
                 if mode == '+':
                     dice = [right] * left
@@ -175,9 +175,9 @@ def parse_tokens(roll_string: str) -> RollData:
                 case '_':
                     raise ValueError(f'Invalid operator {operator}')
 
-        left        = None
-        operator    = None
-        right       = None
+        left        = None  # type: ignore
+        operator    = None  # type: ignore
+        right       = None  # type: ignore
 
     for token in tokens:
         # if not an operator
