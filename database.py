@@ -181,7 +181,7 @@ def change_char_name(character: str, new_name: str, guild: int) -> str:
         with conn:
             cur = conn.cursor()
 
-            cur.execute("UPDATE name SET name=? FROM characters WHERE name=? AND guild=?", (new_name, character, guild))
+            cur.execute("UPDATE characters SET name=? WHERE name=? AND guild=?", (new_name, character, guild))
 
             if cur.rowcount == 0:
                 return f"No character found with name {character}"
