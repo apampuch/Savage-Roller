@@ -120,10 +120,10 @@ def fight(characters: list[str], guild: int, channel: int) -> str:
     database.insert_into_list(characters, guild, channel)
 
     # deal cards to each character
-    next_round(guild, channel)
+    chart: str = next_round(guild, channel)
 
     if len(characters) > 0:
-        return get_init_list(guild, channel).make_initiative_chart()
+        return chart
     else:
         return "Made empty iniative. Add some characters."
 
@@ -197,8 +197,16 @@ def show_list(guild: int, channel: int) -> str:
 
     return init_list.make_initiative_chart()
 
-def next_round(guild: int, channel: int):
+def next_round(guild: int, channel: int) -> str:
     init_list = get_init_list(guild, channel, sort_init=False)
+    init_list.round_count += 1
+
+    # clear all unused and tactician cards from characters
+    for char in init_list.characters:
+        char.unused_cards.clear()
+        char.tactician_cards.clear()
+
+    prepend: str = ""
 
     # check if a joker was drawn last round
     last_round_cards = [card for char in init_list.characters
@@ -207,11 +215,14 @@ def next_round(guild: int, channel: int):
     # shuffle if it was
     if "RJ" in last_round_cards or "BJ" in last_round_cards:
         init_list.shuffle_deck(full_shuffle=True)
+        prepend = "Joker drawn last round, reshuffling deck.\n\n"
 
     for char in init_list.characters:
         deal_card_to_character(init_list, char)
 
     init_list.update_db(guild, channel)
+
+    return prepend + get_init_list(guild, channel).make_initiative_chart()
 
 
 def add_to_initiative(characters: list[str], guild: int, channel: int):

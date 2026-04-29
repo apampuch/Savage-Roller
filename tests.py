@@ -220,11 +220,20 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # print(init_list.make_initiative_chart())
 
 # test all edges
-# database.new_list(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0)
+# database.new_list(123, 0)
 # database.delete_list(123,0)
 
-print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
+# print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
+# print(characters.deal_new_card_to_character("Johnny Test", 123, 0))
 
-print(characters.fight(["Mooks"], 123, 1))
-characters.remove_from_initiative(["Mooks"], 123, 1)
-characters.remove_from_initiative(["Mooks"], 123, 0)
+# print(characters.fight(["Mooks"], 123, 1))
+# characters.remove_from_initiative(["Mooks"], 123, 1)
+# characters.remove_from_initiative(["Mooks"], 123, 0)
+
+# test rename
+# print(characters.rename_character("Johnny Tested", "Johnny Test", 123))
+
+print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
+print()
+print(characters.next_round(123, 0))
+
