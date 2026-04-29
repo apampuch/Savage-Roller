@@ -22,14 +22,19 @@ suit_dict_inverted = {v: k for k, v in suit_dict.items()}
 Changes from pure character format (SA, C2) to symbol format (♠A, ♣2)
 """
 def char_to_symbol(card: str) -> str:
-    suit: str = card[0]
-    suit = suit_dict[suit]
+    try:
+        suit: str = card[0]
+        suit = suit_dict[suit]
 
-    return suit + card[1:]
-
+        return suit + card[1:]
+    except KeyError:
+        return card
 
 def symbol_to_char(card: str) -> str:
-    suit: str = card[0]
-    suit = suit_dict_inverted[suit]
+    try:
+        suit: str = card[0]
+        suit = suit_dict_inverted[suit]
 
-    return suit + card[1:]
+        return suit + card[1:]
+    except KeyError:
+        return card
