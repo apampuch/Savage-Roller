@@ -171,7 +171,10 @@ This is only used to deal cards to characters already assigned one.
 Usually when spending bennies.
 """
 def deal_new_card_to_character(name: str, guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, False)
+    try:
+        init_list = get_init_list(guild, channel, False)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
 
     char: Character | None = next((char for char in init_list.characters if char.name == name), None)
 
@@ -232,7 +235,10 @@ def remove_from_initiative(characters: list[str], guild: int, channel: int):
     return database.delete_from_list(characters, guild, channel)
 
 def choose_card(name: str, card: str, guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, False)
+    try:
+        init_list = get_init_list(guild, channel, False)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
 
     char: Character | None = next((char for char in init_list.characters if char.name == name), None)
 
@@ -251,7 +257,10 @@ def choose_card(name: str, card: str, guild: int, channel: int) -> str:
         return f"Could not find card {char_to_symbol(card)} in {name}'s unused cards."
 
 def assign_tactician_card(tactician_name: str, card: str, recipient_name: str, guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, False)
+    try:
+        init_list = get_init_list(guild, channel, False)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
 
     tactician_char: Character | None = next((char for char in init_list.characters if char.name == tactician_name), None)    
     recipient_char: Character | None = next((char for char in init_list.characters if char.name == recipient_name), None)
@@ -274,7 +283,10 @@ def assign_tactician_card(tactician_name: str, card: str, recipient_name: str, g
         return f"Could not find card {char_to_symbol(card)} in {tactician_name}'s tactician cards."
 
 def quick_redraw(name: str, guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, False)
+    try:
+        init_list = get_init_list(guild, channel, False)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
 
     char: Character | None = next((char for char in init_list.characters if char.name == name), None)
 

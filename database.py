@@ -6,6 +6,10 @@ import sqlite3
 from decks import PlayingCardDeck
 from sys import argv
 
+class NotFoundInChannelError(LookupError):
+    """Raised when an initiative list is not found in a channel."""
+    pass
+
 VALID_EDGES = set(["hesitant", "quick", "levelheaded",
                "levelheaded-imp", "tactician", "tactician-imp"])
 
@@ -256,12 +260,12 @@ def get_initiative_list_and_characters(guild: int, channel: int):
 
             initiative_list = cur.execute("SELECT deck, round_count, id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()  
 
+            if initiative_list == None:
+                raise NotFoundInChannelError(f"No initiative list found in this channel.")
+
             # TODO test this shit
             # get all of the characters
-            # character_rows = cur.execute("""
-            #     SELECT im.main_card FROM initiative_membership im WHERE im.init_id=?
-            # """,
-            # (initiative_list[2],)).fetchall()
+
             character_rows = cur.execute("""
                 SELECT c.name, im.main_card, c.bennies,
                 COALESCE(
@@ -279,6 +283,8 @@ def get_initiative_list_and_characters(guild: int, channel: int):
             (initiative_list[2],)).fetchall()
 
             return initiative_list, character_rows
+    except TypeError as e:
+        raise e
     except sqlite3.IntegrityError as e:
         raise e
 
