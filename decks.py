@@ -26,7 +26,7 @@ def char_to_symbol(card: str) -> str:
     return suit + card[1:]
 
 
-def symbol_to_Char(card: str) -> str:
+def symbol_to_char(card: str) -> str:
     suit: str = card[0]
     suit = suit_dict_inverted[suit]
 
