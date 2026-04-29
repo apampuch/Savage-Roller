@@ -1,4 +1,5 @@
 import database
+from decks import PlayingCardDeck
 import edges
 
 from initiative_list import Character, InitiativeList
@@ -75,7 +76,9 @@ def remove_edges_from_character(name: str, guild: int, edges: list[str]):
     database.delete_edges_from_character(name, guild, edges)
     return f"Deleted {", ".join(edges)} from {name}"
 
-
+"""
+Helper function.
+"""
 def get_init_list(guild: int, channel: int, sort_init=True) -> InitiativeList:
     init_row, char_rows = database.get_initiative_list_and_characters(guild, channel)
 
@@ -162,6 +165,37 @@ def deal_card_to_character(init_list: InitiativeList, char: Character):
     elif 'tactician' in char.edges:
         edges.tactician(init_list, char)
 
+
+"""
+This is only used to deal cards to characters already assigned one.
+Usually when spending bennies.
+"""
+def deal_new_card_to_character(name: str, guild: int, channel: int) -> str:
+    init_list = get_init_list(guild, channel, False)
+
+    char: Character | None = next((char for char in init_list.characters if char.name == name), None)
+
+    if char == None:
+        return f"Could not find character with name {name}."
+
+    # set as main card if higher, or unused if lower
+    new_card = init_list.draw_card()
+    if PlayingCardDeck.index(new_card) < PlayingCardDeck.index(char.main_card):
+        char.unused_cards.append(char.main_card)
+        char.main_card = new_card
+    else:
+        char.unused_cards.append(new_card)
+
+    init_list.sort_characters()
+    init_list.update_db(guild, channel)
+
+    return init_list.make_initiative_chart()
+
+
+def show_list(guild: int, channel: int) -> str:
+    init_list = get_init_list(guild, channel, sort_init=False)
+
+    return init_list.make_initiative_chart()
 
 def next_round(guild: int, channel: int):
     init_list = get_init_list(guild, channel, sort_init=False)
