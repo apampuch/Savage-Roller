@@ -1,5 +1,5 @@
 import database
-from decks import PlayingCardDeck
+from decks import PlayingCardDeck, char_to_symbol
 import edges
 
 from initiative_list import Character, InitiativeList
@@ -230,3 +230,34 @@ def add_to_initiative(characters: list[str], guild: int, channel: int):
 
 def remove_from_initiative(characters: list[str], guild: int, channel: int):
     return database.delete_from_list(characters, guild, channel)
+
+def choose_card(name: str, card: str, guild: int, channel: int) -> str:
+    init_list = get_init_list(guild, channel, False)
+
+    char: Character | None = next((char for char in init_list.characters if char.name == name), None)
+
+    if char == None:
+        return f"Could not find character with name {name}."
+
+    if card in char.unused_cards:
+        char.unused_cards.remove(card)
+        char.unused_cards.append(char.main_card)
+        char.main_card = card
+
+        init_list.sort_characters()
+        return init_list.make_initiative_chart()
+        
+    else:
+        return f"Could not find card {char_to_symbol(card)} in {name}'s unused cards."
+
+def assign_tactician_card(tactician_char: str, card_value: str, recipient_char: str, guild: int, channel: int) -> str:
+    pass
+
+def quick_redraw(name: str, card: str, guild: int, channel: int) -> str:
+    init_list = get_init_list(guild, channel, False)
+
+    char: Character | None = next((char for char in init_list.characters if char.name == name), None)
+
+    if char == None:
+        return f"Could not find character with name {name}."
+    
