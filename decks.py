@@ -11,7 +11,9 @@ suit_dict = {
     "S": "♠",
     "H": "♥",
     "D": "♦",
-    "C": "♣"
+    "C": "♣",
+    "R": "R",
+    "B": "B"
 }
 
 suit_dict_inverted = {v: k for k, v in suit_dict.items()}
