@@ -1,10 +1,28 @@
 import json
-import database
+# import database
 
+from database import update_list
 from dataclasses import dataclass, field
 from decks import PlayingCardDeck, char_to_symbol
 from tabulate import tabulate
 from random import shuffle
+
+@dataclass
+class Character:
+    name: str
+    main_card: str
+    bennies: int = 0
+    edges: list[str] = field(default_factory=list)
+    unused_cards: list[str] = field(default_factory=list)
+    tactician_cards: list[str] = field(default_factory=list)
+
+    def insert_into_tabulate(self, tab_dict: dict):
+        tab_dict["Name"].append(self.name)
+        tab_dict["Card"].append(char_to_symbol(self.main_card))
+        tab_dict["Bennies"].append(self.bennies)
+        tab_dict["Edges"].append(", ".join(self.edges))
+        tab_dict["Unused"].append(", ".join(map(char_to_symbol, self.unused_cards)))
+        tab_dict["Tactician"].append(", ".join(map(char_to_symbol, self.tactician_cards)))
 
 @dataclass
 class InitiativeList:
@@ -86,21 +104,4 @@ class InitiativeList:
             character_info.append(info)
 
 
-        database.update_list(names, character_info, guild, channel, self.deck, self.round_count)
-
-@dataclass
-class Character:
-    name: str
-    main_card: str
-    bennies: int = 0
-    edges: list[str] = field(default_factory=list)
-    unused_cards: list[str] = field(default_factory=list)
-    tactician_cards: list[str] = field(default_factory=list)
-
-    def insert_into_tabulate(self, tab_dict: dict):
-        tab_dict["Name"].append(self.name)
-        tab_dict["Card"].append(char_to_symbol(self.main_card))
-        tab_dict["Bennies"].append(self.bennies)
-        tab_dict["Edges"].append(", ".join(self.edges))
-        tab_dict["Unused"].append(", ".join(map(char_to_symbol, self.unused_cards)))
-        tab_dict["Tactician"].append(", ".join(map(char_to_symbol, self.tactician_cards)))
+        update_list(names, character_info, guild, channel, self.deck, self.round_count)
