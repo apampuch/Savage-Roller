@@ -176,6 +176,21 @@ def delete_character(name: str, guild: int):
         raise e
 
 
+def change_char_name(character: str, new_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+
+            cur.execute("UPDATE name SET name=? FROM characters WHERE name=? AND guild=?", (new_name, character, guild))
+
+            if cur.rowcount == 0:
+                return f"No character found with name {character}"
+
+            return f"Renamed {character} to {new_name}."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
 def get_edges_and_id(name: str, guild: int) -> tuple[int, tuple]:
     try:
         with conn:
@@ -339,15 +354,15 @@ def delete_list(guild: int, channel: int):
     except sqlite3.IntegrityError as e:
         raise e
 
-
 def insert_into_list(characters: list[str], guild: int, channel: int):
     try:
         with conn:
             cur = conn.cursor()
 
             res = cur.execute("SELECT id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()
+            
             if res is None:
-                raise LookupError(f"No fight in this channel.")
+                raise LookupError("No fight in this channel.")
             
             # get characters and their ids
             found_ids = get_characters(characters, guild)
@@ -397,7 +412,7 @@ def update_list(character_names: list[str], character_info: list[list], guild: i
             """, (json.dumps(deck), round_count, guild, channel)).fetchone()
 
             if cur.rowcount == 0:
-                raise LookupError(f"No fight in this channel.")
+                raise LookupError("No fight in this channel.")
             else:
                 # get all character ids
                 char_id_getters = [ [x, guild] for x in character_names ]
