@@ -253,11 +253,14 @@ def choose_card(name: str, card: str, guild: int, channel: int) -> str:
 def assign_tactician_card(tactician_char: str, card_value: str, recipient_char: str, guild: int, channel: int) -> str:
     pass
 
-def quick_redraw(name: str, card: str, guild: int, channel: int) -> str:
+def quick_redraw(name: str, guild: int, channel: int) -> str:
     init_list = get_init_list(guild, channel, False)
 
     char: Character | None = next((char for char in init_list.characters if char.name == name), None)
 
     if char == None:
         return f"Could not find character with name {name}."
-    
+
+    edges.quick(init_list, char)
+    init_list.sort_characters()
+    return init_list.make_initiative_chart()

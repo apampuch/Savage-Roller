@@ -233,7 +233,11 @@ run_test(split_roll_string, ['1p12'], ['1p12'])
 # test rename
 # print(characters.rename_character("Johnny Tested", "Johnny Test", 123))
 
-print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
-print()
-print(characters.next_round(123, 0))
+# print(characters.fight(["Johnny Test", "Joe Tactician", "Billy Quick", "Mindy Slow", "Teddy Steady", "Andrew Everything", "Mooks"], 123, 0))
+# print()
+# print(characters.next_round(123, 0))
 
+# print(characters.choose_card("Billy Quick", "D5", 123, 0))
+# print(characters.choose_card("Billy Quick", "D10", 123, 0))
+# print(characters.choose_card("Billy Quick", "X10", 123, 0))
+print(characters.quick_redraw("Mooks", 123, 0))
