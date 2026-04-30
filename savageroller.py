@@ -42,6 +42,15 @@ async def fight(ctx: discord.ApplicationContext, char_names: str):
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
+@bot.slash_command(name="new_round", description="Starts a new round of combat.")
+async def new_round(ctx: discord.ApplicationContext):
+    try:
+        message = "```" + characters.next_round(ctx.guild_id, ctx.channel_id) + "```"
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
 @bot.slash_command(name="deal_in", description="Deal in new characters")
 async def deal_in(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
