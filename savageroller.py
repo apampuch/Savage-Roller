@@ -36,7 +36,7 @@ async def fight(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
 
     try:
-        message = characters.fight(chars_list, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.fight(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -47,7 +47,7 @@ async def deal_in(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
 
     try:
-        message = characters.add_to_initiative(chars_list, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.add_to_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -58,7 +58,7 @@ async def remove(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
 
     try:
-        message = characters.remove_from_initiative(chars_list, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.remove_from_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -67,7 +67,7 @@ async def remove(ctx: discord.ApplicationContext, char_names: str):
 @bot.slash_command(name="give_card", description="Give a characters a new card")
 async def give_card(ctx: discord.ApplicationContext, char_name: str):
     try:
-        message = characters.deal_new_card_to_character(char_name, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.deal_new_card_to_character(char_name, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -76,7 +76,7 @@ async def give_card(ctx: discord.ApplicationContext, char_name: str):
 @bot.slash_command(name="list", description="Lists everyone in the current fight")
 async def list_fight(ctx: discord.ApplicationContext):
     try:
-        message = characters.show_list(ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.show_list(ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -86,7 +86,7 @@ async def list_fight(ctx: discord.ApplicationContext):
 @bot.slash_command(name="assign_tactician_card", description="Assigns a character a tactician card from another character's tactician card lst.")
 async def assign_tactician_card(ctx: discord.ApplicationContext, tactician_character: str, card: str, recipient_character: str):
     try:
-        message = characters.assign_tactician_card(tactician_character, card, recipient_character, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.assign_tactician_card(tactician_character, card, recipient_character, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -103,10 +103,10 @@ async def choose_card(ctx: discord.ApplicationContext, char_name: str, card: str
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
-@bot.slash_command(name="quick_redraw", description="Makes a character redraw cards until their current card is greater than 5. This is mostly intended to be used with char_names who have both Level Headed and Quick, and works on characters without Quick.")
+@bot.slash_command(name="quick_redraw", description="Makes a character redraw cards until their current card is greater than 5.")
 async def quick_redraw(ctx: discord.ApplicationContext, char_name: str):
     try:
-        message = characters.quick_redraw(char_name, ctx.guild_id, ctx.channel_id)
+        message = "```" + characters.quick_redraw(char_name, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
