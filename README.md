@@ -49,6 +49,9 @@ Edges can be added with `add_edges [edges]`. Multiple edges can be added if comm
 
 Edges can be removed with `remove_edges [edges]`.
 
+## Bennies
+Give bennies (one at a time) with `/give_benny [characters]`. Take them with `/take_benny [characters]`. Set them to a specified amount with `/set_bennies [characters] [number]`.
+
 # Initiative
 Initiative lists are per channel and server. This means that you can have multiple initiative lists per server, as long as each one is in a different channel. Most commands can take multiple names as long as they're split with commas, `/fight Lelouche, Suzaku, Karen` will add three characters to initiative: `Lelouch`, `Suzaku`, and `Karen` (leading and trailing whitespace will be stripped). On the other hand, using `/fight Lelouche Suzaku Karen` will just add one character named `Lelouche Suzaku Karen`. (This is purposefully different from the project I based this on because it personally bugged me.)
 
