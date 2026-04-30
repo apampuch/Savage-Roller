@@ -4,7 +4,7 @@ A Savage Worlds die roller built with python, pycord, and sqlite.
 Do not run Savage Roller with python3.14, as the event loop thing is broken with pycord.
 
 ## Installation
-To just run it yourself, click this link
+To add Savage Roller to your server, click this link:
 
 https://discord.com/oauth2/authorize?client_id=1415122496339972108
 
