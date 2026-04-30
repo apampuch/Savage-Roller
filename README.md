@@ -7,7 +7,9 @@ Do not run Savage Roller with python3.14, as the event loop thing is broken with
 You will need to setup a .env file with your own token, public key, and application ID from Discord. See https://guide.pycord.dev/getting-started/creating-your-first-bot#tokens for details.
 
 ## Run in Docker
-`sudo docker run --env-file .env savage-roller`
+https://hub.docker.com/r/apampuch/savage-roller/
+`docker run -d --rm --env-file .env -v HOSTDATAFOLDER:/app/data apampuch/savage-roller:latest`
+Use `:Z` after the volume mount if you're using a system with SELinux (Fedora, RHEL, etc.)
 
 # Rolling
 Use `/roll` to roll dice. Basic format is `[num][key-operator][die-size]`, if the first `num` is not provided, it assumes 1.
