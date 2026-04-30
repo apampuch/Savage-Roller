@@ -3,7 +3,10 @@ A Savage Worlds die roller built with python, pycord, and sqlite.
 
 Do not run Savage Roller with python3.14, as the event loop thing is broken with pycord.
 
-# Run in Docker
+# Running It Yourself
+You will need to setup a .env file with your own token, public key, and application ID from Discord. See https://guide.pycord.dev/getting-started/creating-your-first-bot#tokens for details.
+
+## Run in Docker
 `sudo docker run --env-file .env savage-roller`
 
 # Rolling
