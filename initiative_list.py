@@ -61,7 +61,7 @@ class InitiativeList:
         if all(map(lambda c: len(c.tactician_cards) == 0, self.characters)):
             del tab_dict["Tactician"]
 
-        return tabulate(tab_dict, headers="keys", tablefmt="simple")
+        return f"Round {self.round_count}\n\n" + tabulate(tab_dict, headers="keys", tablefmt="simple")
 
     def shuffle_deck(self, full_shuffle = False):
         # if full shuffle, shuffle a full new deck of cards

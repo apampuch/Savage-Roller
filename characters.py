@@ -224,7 +224,7 @@ def next_round(guild: int, channel: int) -> str:
     # shuffle if it was
     if "RJ" in last_round_cards or "BJ" in last_round_cards:
         init_list.shuffle_deck(full_shuffle=True)
-        prepend = "Joker drawn last round, reshuffling deck.\n\n"
+        prepend = "Joker drawn last round, reshuffling deck.\n"
 
     for char in init_list.characters:
         deal_card_to_character(init_list, char)
