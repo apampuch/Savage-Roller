@@ -62,8 +62,8 @@ async def deal_in(ctx: discord.ApplicationContext, char_names: str):
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
-@bot.slash_command(name="remove", description="Remove a character from the current fight")
-async def remove(ctx: discord.ApplicationContext, char_names: str):
+@bot.slash_command(name="deal_out", description="Remove a character from the current fight")
+async def deal_out(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
 
     try:
@@ -73,7 +73,7 @@ async def remove(ctx: discord.ApplicationContext, char_names: str):
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
-@bot.slash_command(name="give_card", description="Give a characters a new card")
+@bot.slash_command(name="give_card", description="Give a character a new card")
 async def give_card(ctx: discord.ApplicationContext, char_name: str):
     try:
         message = "```" + characters.deal_new_card_to_character(char_name, ctx.guild_id, ctx.channel_id) + "```"
