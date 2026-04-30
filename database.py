@@ -368,12 +368,14 @@ def insert_into_list(characters: list[str], guild: int, channel: int):
             res = cur.execute("SELECT id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()
             
             if res is None:
-                raise LookupError("No fight in this channel.")
+                raise NotFoundInChannelError("No fight in this channel.")
+
+            init_id = res[0]
             
             # get characters and their ids
             found_ids = get_characters(characters, guild)
 
-            rows = [(char_id, cur.lastrowid) for char_id in found_ids]
+            rows = [(char_id, init_id) for char_id in found_ids]
 
             cur.executemany("INSERT INTO initiative_membership (char_id, init_id) VALUES (?,?)", rows)
 
@@ -387,15 +389,17 @@ def delete_from_list(characters: list[str], guild: int, channel: int):
             cur = conn.cursor()
 
             res = cur.execute("SELECT id FROM initiative_lists WHERE guild=? AND channel=?", (guild, channel)).fetchone()
+
             if res is None:
-                raise LookupError(f"No fight in this channel.")
+                raise NotFoundInChannelError(f"No fight in this channel.")
 
             init_id = res[0]
 
             found_ids = get_characters(characters, guild)
 
             for char_id in found_ids:
-                cur.execute("DELETE FROM initiative_membership WHERE char_id=? AND init_id=?", (char_id, init_id))            
+                cur.execute("DELETE FROM initiative_membership WHERE char_id=? AND init_id=?", (char_id, init_id))    
+                        
     except sqlite3.IntegrityError as e:
         raise e
 
