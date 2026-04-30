@@ -196,12 +196,18 @@ def deal_new_card_to_character(name: str, guild: int, channel: int) -> str:
 
 
 def show_list(guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, sort_init=False)
+    try:
+        init_list = get_init_list(guild, channel)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
 
     return init_list.make_initiative_chart()
 
 def next_round(guild: int, channel: int) -> str:
-    init_list = get_init_list(guild, channel, sort_init=False)
+    try:
+        init_list = get_init_list(guild, channel, False)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
     init_list.round_count += 1
 
     # clear all unused and tactician cards from characters
@@ -227,12 +233,37 @@ def next_round(guild: int, channel: int) -> str:
 
     return prepend + get_init_list(guild, channel).make_initiative_chart()
 
-
+# TODO make these two functions return the initiative list string
+# TODO figure out why they don't work in the wild
 def add_to_initiative(characters: list[str], guild: int, channel: int):
-    return database.insert_into_list(characters, guild, channel)
+    try:
+        database.insert_into_list(characters, guild, channel)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
+
+    init_list = get_init_list(guild, channel, False)
+
+    chars = [c for c in init_list.characters if c.name in characters]
+
+    for char in chars:
+        deal_card_to_character(init_list, char)
+
+    init_list.update_db(guild, channel)
+    init_list.sort_characters()
+    return init_list.make_initiative_chart()
+
 
 def remove_from_initiative(characters: list[str], guild: int, channel: int):
-    return database.delete_from_list(characters, guild, channel)
+    try:
+        database.delete_from_list(characters, guild, channel)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
+
+    init_list = get_init_list(guild, channel, False)
+
+    init_list.sort_characters()
+    return init_list.make_initiative_chart()
+
 
 def choose_card(name: str, card: str, guild: int, channel: int) -> str:
     try:
