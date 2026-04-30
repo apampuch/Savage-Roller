@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of your code
 COPY . .
 
+# make data dir
+RUN mkdir -p /app/data
+
 # Run your app (change this!)
-CMD ["python", "savageroller.py"]
+CMD ["python", "savageroller.py", "docker"]

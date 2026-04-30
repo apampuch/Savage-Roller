@@ -39,6 +39,8 @@ print("Starting DB", flush=True)
 db_file = ""
 if "dbtest" in argv:
     db_file = "test.db"
+elif "docker" in argv:
+    db_file = "/app/data/database.db"
 else:
     db_file = "database.db"
 
