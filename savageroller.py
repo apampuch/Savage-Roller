@@ -147,11 +147,8 @@ async def add_edges(ctx: discord.ApplicationContext, character_name: str, edges:
     edges_list = set(map(lambda x: x.strip(), edges.split(',')))
 
     try:
-        invalid = characters.add_edges_to_character(character_name, ctx.guild_id, edges_list)
-        if len(invalid) == 0:
-            await ctx.respond("Successfully added edges")
-        else:
-            await ctx.respond("The following edges are invalid (valid ones were added):" + str(invalid))
+        message = characters.add_edges_to_character(character_name, ctx.guild_id, edges_list)
+        await ctx.respond(message)
     except LookupError:
         await ctx.respond(f"Character {character_name} does not exist.")
 
