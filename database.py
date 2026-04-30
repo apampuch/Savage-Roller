@@ -34,7 +34,7 @@ def exclusivity_check(edge: str, all_edges: set[str]) -> bool:
     # if any edges exist in both, return false, else return true
     return not edge_test & dq_edges
 
-print("Starting DB")
+print("Starting DB", flush=True)
 
 db_file = ""
 if "dbtest" in argv:
