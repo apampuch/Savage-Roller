@@ -31,6 +31,7 @@ async def roll(ctx: discord.ApplicationContext, msg: str):
         raise
 
 # INITIATIVE
+
 @bot.slash_command(name="fight", description="Start a new fight")
 async def fight(ctx: discord.ApplicationContext, char_names: str):
     chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
@@ -122,6 +123,7 @@ async def quick_redraw(ctx: discord.ApplicationContext, char_name: str):
         raise
 
 # CHARACTERS AND BENNIES
+
 @bot.slash_command(name="new_character", description="Create a new character")
 async def new_character(ctx: discord.ApplicationContext, char_name: str):
     try:
@@ -171,7 +173,33 @@ async def remove_edges(ctx: discord.ApplicationContext, character_name: str, edg
     except LookupError:
         await ctx.respond(f"Character {character_name} does not exist.")
 
+@bot.slash_command(name="give_benny", description="Gives a benny to a character.")
+async def give_benny(ctx: discord.ApplicationContext, character_name: str):
+    try:
+        message  = characters.give_benny(character_name, ctx.guild_id)
+        await ctx.respond(message)
+    except LookupError:
+        await ctx.respond(f"Character {character_name} does not exist.")
+
+@bot.slash_command(name="take_benny", description="Gives a benny to a character.")
+async def take_benny(ctx: discord.ApplicationContext, character_name: str):
+    try:
+        message  = characters.take_benny(character_name, ctx.guild_id)
+        await ctx.respond(message)
+    except LookupError:
+        await ctx.respond(f"Character {character_name} does not exist.")
+
+@bot.slash_command(name="set_bennies", description="Sets the number of bennies a character has to a specific value.")
+async def set_bennies(ctx: discord.ApplicationContext, character_name: str, number: int):
+    try:
+        message  = characters.set_bennies(character_name, number, ctx.guild_id)
+        await ctx.respond(message)
+    except LookupError:
+        await ctx.respond(f"Character {character_name} does not exist.")
+
+
 # BACKLASH
+
 @bot.slash_command(name="tarot_backlash", description="Draw cards from tarot deck to start backlash")
 async def tarot_backlash(ctx: discord.ApplicationContext, msg: str):
     await ctx.respond("NYI")

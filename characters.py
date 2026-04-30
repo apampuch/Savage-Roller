@@ -203,6 +203,7 @@ def show_list(guild: int, channel: int) -> str:
 
     return init_list.make_initiative_chart()
 
+
 def next_round(guild: int, channel: int) -> str:
     try:
         init_list = get_init_list(guild, channel, False)
@@ -286,6 +287,7 @@ def choose_card(name: str, card: str, guild: int, channel: int) -> str:
     else:
         return f"Could not find card {char_to_symbol(card)} in {name}'s unused cards."
 
+
 def assign_tactician_card(tactician_name: str, card: str, recipient_name: str, guild: int, channel: int) -> str:
     try:
         init_list = get_init_list(guild, channel, False)
@@ -312,6 +314,7 @@ def assign_tactician_card(tactician_name: str, card: str, recipient_name: str, g
     else:
         return f"Could not find card {char_to_symbol(card)} in {tactician_name}'s tactician cards."
 
+
 def quick_redraw(name: str, guild: int, channel: int) -> str:
     try:
         init_list = get_init_list(guild, channel, False)
@@ -326,3 +329,18 @@ def quick_redraw(name: str, guild: int, channel: int) -> str:
     edges.quick(init_list, char)
     init_list.sort_characters()
     return init_list.make_initiative_chart()
+
+
+def give_benny(name: str, guild: int) -> str:
+    return database.add_benny(name, guild)
+
+
+def take_benny(name: str, guild: int) -> str:
+    return database.sub_benny(name, guild)
+
+
+def set_bennies(name: str, number: int, guild: int) -> str:
+    if number < 0:
+        return "Must set to a positive number or zero."
+    else:
+        return database.set_bennies(name, number, guild)

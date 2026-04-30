@@ -195,6 +195,75 @@ def change_char_name(character: str, new_name: str, guild: int) -> str:
         raise e
 
 
+def add_benny(name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+
+            cur.execute("UPDATE characters SET bennies=bennies+1 WHERE name=? AND guild=?", (name, guild))
+
+            if cur.rowcount == 1:
+                benny_count = cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()[0]
+
+                return f"{name} benny count: {benny_count}."
+
+            elif cur.rowcount > 1:
+                return "Somehow multiple characters were updated which should be impossible."
+
+            else:
+                return f"Character {name} not found."
+
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def sub_benny(name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+
+            cur.execute("UPDATE characters SET bennies=bennies-1 WHERE name=? AND guild=? AND bennies > 0", (name, guild))
+
+            if cur.rowcount == 1:
+                benny_count = cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()[0]
+
+                return f"{name} benny count: {benny_count}."
+
+            elif cur.rowcount > 1:
+                return "Somehow multiple characters were updated which should be impossible."
+
+            else:
+                row =cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()
+
+                if row is None:
+                    return f"Character {name} not found."
+                else:
+                    return f"Character {name} has no bennies left."
+
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def set_bennies(name: str, number: int, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+
+            cur.execute("UPDATE characters SET bennies=? WHERE name=? AND guild=?", (number, name, guild))
+
+            if cur.rowcount == 1:
+                return f"{name} benny count: {number}."
+
+            elif cur.rowcount > 1:
+                return "Somehow multiple characters were updated which should be impossible."
+
+            else:
+                return f"Character {name} not found."
+
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
 def get_edges_and_id(name: str, guild: int) -> tuple[int, tuple]:
     try:
         with conn:
