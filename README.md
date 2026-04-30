@@ -8,7 +8,9 @@ You will need to setup a .env file with your own token, public key, and applicat
 
 ## Run in Docker
 https://hub.docker.com/r/apampuch/savage-roller/
+
 `docker run -d --rm --env-file .env -v HOSTDATAFOLDER:/app/data apampuch/savage-roller:latest`
+
 Use `:Z` after the volume mount if you're using a system with SELinux (Fedora, RHEL, etc.)
 
 # Rolling
