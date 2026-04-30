@@ -233,8 +233,7 @@ def next_round(guild: int, channel: int) -> str:
 
     return prepend + get_init_list(guild, channel).make_initiative_chart()
 
-# TODO make these two functions return the initiative list string
-# TODO figure out why they don't work in the wild
+
 def add_to_initiative(characters: list[str], guild: int, channel: int):
     try:
         database.insert_into_list(characters, guild, channel)
