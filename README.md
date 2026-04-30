@@ -30,9 +30,47 @@ All sub operators come after the key operators, sub operators may be applied in 
 - `-`: As above, but it subtracts instead of adds.
 
 # Characters
-Characters are per server. You can store initiative-relevant edges on characters.
+Characters are per server, and are mostly used for saving commonly used characters, like PCs. You can store initiative-relevant edges on characters.
+
+Create a character with `/new_character [name]`. Delete them with `/new_character [name]`. Rename them with `/new_character [old_name] [new_name]`.
+
+## Edges
+Characters can have edges, though since only initiative-related ones are relevant, they're the only ones that can be applied. They are:
+- `quick`
+- `levelheaded`
+- `levelheaded-imp`
+- `tactician`
+- `tactician-imp`
+- `hesitant` (technically, this is a hindrance, but it functions as a way to modify initiative, so it's included)
+
+All of these edges are functional, that means that a character with Quick will discard cards with a value of 5 or lower until something higher is dealt. Tactician edges are handled with special commands.
+
+Edges can be added with `add_edges [edges]`. Multiple edges can be added if comma separated, but they can't be edges that conflict with each other as per the rules. Improved edges are mutually exclusive with their normal ones; to upgrade, remove the old edge, then add the improved one.
+
+Edges can be removed with `remove_edges [edges]`.
 
 # Initiative
-Initiative lists are per channel and server.
-You can either use characters stored in your server. If a character isn't found in the initiative list, they're added as a temporary character.
+Initiative lists are per channel and server. This means that you can have multiple initiative lists per server, as long as each one is in a different channel. Most commands can take multiple names as long as they're split with commas, `/fight Lelouche, Suzaku, Karen` will add three characters to initiative: `Lelouch`, `Suzaku`, and `Karen` (leading and trailing whitespace will be stripped). On the other hand, using `/fight Lelouche Suzaku Karen` will just add one character named `Lelouche Suzaku Karen`. (This is purposefully different from the project I based this on because it personally bugged me.)
+
+## Card Values
+Some commands require a card value as input. These are represented by short strings, with the first character being the suit, and the following character(s) being the value. Thus, C4 is a Four of Clubs, S10 is the Ten of Spades, HK is the King of Hearts, and RJ is the Red Joker.
+
+## Temporary Characters
+When adding characters to a fight, you don't have to use names of characters saved on the server. If you use 
 Temporary characters are deleted when a new fight is started, or when they're removed from the initiative list.
+
+To start a fight, use `/fight [characters]`. To add characters to a fight, use `/deal_in [characters]`. To remove characters, use `/deal_out [characters]`.
+
+Starting a new round is simple: use `/new_round`. If you want to deal a character a new card from the deck, use `give_card [character]`. To simply list the current initiative, use `/list_fight`, although most commands will also do this.
+
+Tactician cards are handled in a separate column. To give a character a tactician card, use `/assign_tactician_card [tactician_character] [card_value] [recipient_character]`. 
+
+## Special Initiative Commands
+Level Headed and Improved Level Headed technically don't *require* you to use the highest card drawn, but Savage Roller automatically selects it for you when dealing initiative. If you don't want to use that card for some reason (to get the Calculating bonus, for instance), use `/choose_card [character] [unused_card]`, where `unused_card` is one of the cards in the character's Unused Cards column.
+
+Furthermore, those with both Level Headed and Quick might want to choose a card with a rank of 5 or lower if their higher card isn't particularly high, specifically to gamble for an even higher card. To do this, first select the lower card with `/choose_card`, then use `/quick_redraw [character]` to perform the redrawing function of the Quick edge. Note that this function does not actually check if the target character has the Quick edge or not, I trust that you will use this responsibly.
+
+# Planned Features
+- Bennies: As explained in SW.
+- Parties: Preset lists of characters that can easily be dealt in and given bennies. Will probably have to share unique names with character names.
+- Character Rolls: A way to save things like traits and damage rolls to characters. Will also have a way for a user to "control" a character and use their saved rolls.
