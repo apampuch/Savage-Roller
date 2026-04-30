@@ -331,16 +331,16 @@ def quick_redraw(name: str, guild: int, channel: int) -> str:
     return init_list.make_initiative_chart()
 
 
-def give_benny(name: str, guild: int) -> str:
-    return database.add_benny(name, guild)
+def give_benny(names: list[str], guild: int) -> str:
+    return database.add_benny(names, guild)
 
 
-def take_benny(name: str, guild: int) -> str:
-    return database.sub_benny(name, guild)
+def take_benny(names: list[str], guild: int) -> str:
+    return database.sub_benny(names, guild)
 
 
-def set_bennies(name: str, number: int, guild: int) -> str:
+def set_bennies(names: list[str], number: int, guild: int) -> str:
     if number < 0:
         return "Must set to a positive number or zero."
     else:
-        return database.set_bennies(name, number, guild)
+        return database.set_bennies(names, number, guild)

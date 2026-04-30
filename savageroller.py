@@ -33,8 +33,8 @@ async def roll(ctx: discord.ApplicationContext, msg: str):
 # INITIATIVE
 
 @bot.slash_command(name="fight", description="Start a new fight")
-async def fight(ctx: discord.ApplicationContext, char_names: str):
-    chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
+async def fight(ctx: discord.ApplicationContext, character_names: str):
+    chars_list = list(set(map(lambda x: x.strip(), character_names.split(','))))
 
     try:
         message = "```" + characters.fight(chars_list, ctx.guild_id, ctx.channel_id) + "```"
@@ -53,8 +53,8 @@ async def new_round(ctx: discord.ApplicationContext):
         raise
 
 @bot.slash_command(name="deal_in", description="Deal in new characters")
-async def deal_in(ctx: discord.ApplicationContext, char_names: str):
-    chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
+async def deal_in(ctx: discord.ApplicationContext, character_names: str):
+    chars_list = list(set(map(lambda x: x.strip(), character_names.split(','))))
 
     try:
         message = "```" + characters.add_to_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
@@ -64,8 +64,8 @@ async def deal_in(ctx: discord.ApplicationContext, char_names: str):
         raise
 
 @bot.slash_command(name="deal_out", description="Remove a character from the current fight")
-async def deal_out(ctx: discord.ApplicationContext, char_names: str):
-    chars_list = list(set(map(lambda x: x.strip(), char_names.split(','))))
+async def deal_out(ctx: discord.ApplicationContext, character_names: str):
+    chars_list = list(set(map(lambda x: x.strip(), character_names.split(','))))
 
     try:
         message = "```" + characters.remove_from_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
@@ -174,28 +174,34 @@ async def remove_edges(ctx: discord.ApplicationContext, character_name: str, edg
         await ctx.respond(f"Character {character_name} does not exist.")
 
 @bot.slash_command(name="give_benny", description="Gives a benny to a character.")
-async def give_benny(ctx: discord.ApplicationContext, character_name: str):
+async def give_benny(ctx: discord.ApplicationContext, character_names: str):
+    names_list = list(map(lambda x: x.strip(), character_names.split(',')))
+
     try:
-        message  = characters.give_benny(character_name, ctx.guild_id)
+        message = characters.give_benny(names_list, ctx.guild_id)
         await ctx.respond(message)
     except LookupError:
-        await ctx.respond(f"Character {character_name} does not exist.")
+        await ctx.respond(f"Character {character_names} does not exist.")
 
 @bot.slash_command(name="take_benny", description="Gives a benny to a character.")
-async def take_benny(ctx: discord.ApplicationContext, character_name: str):
+async def take_benny(ctx: discord.ApplicationContext, character_names: str):
+    names_list = list(map(lambda x: x.strip(), character_names.split(',')))
+
     try:
-        message  = characters.take_benny(character_name, ctx.guild_id)
+        message = characters.take_benny(names_list, ctx.guild_id)
         await ctx.respond(message)
     except LookupError:
-        await ctx.respond(f"Character {character_name} does not exist.")
+        await ctx.respond(f"Character {character_names} does not exist.")
 
 @bot.slash_command(name="set_bennies", description="Sets the number of bennies a character has to a specific value.")
-async def set_bennies(ctx: discord.ApplicationContext, character_name: str, number: int):
+async def set_bennies(ctx: discord.ApplicationContext, character_names: str, number: int):
+    names_list = list(map(lambda x: x.strip(), character_names.split(',')))
+
     try:
-        message  = characters.set_bennies(character_name, number, ctx.guild_id)
+        message = characters.set_bennies(names_list, number, ctx.guild_id)
         await ctx.respond(message)
     except LookupError:
-        await ctx.respond(f"Character {character_name} does not exist.")
+        await ctx.respond(f"Character {character_names} does not exist.")
 
 
 # BACKLASH

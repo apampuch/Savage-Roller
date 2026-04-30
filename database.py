@@ -195,70 +195,118 @@ def change_char_name(character: str, new_name: str, guild: int) -> str:
         raise e
 
 
-def add_benny(name: str, guild: int) -> str:
+def add_benny(names: list[str], guild: int) -> str:
     try:
         with conn:
             cur = conn.cursor()
 
-            cur.execute("UPDATE characters SET bennies=bennies+1 WHERE name=? AND guild=?", (name, guild))
+            # report lists
+            found_names =   []
+            found_bennies = []
+            missing_names = []
 
-            if cur.rowcount == 1:
-                benny_count = cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()[0]
+            for name in names:
+                cur.execute("UPDATE characters SET bennies=bennies+1 WHERE name=? AND guild=? RETURNING bennies", (name, guild))
 
-                return f"{name} benny count: {benny_count}."
+                row = cur.fetchone()
 
-            elif cur.rowcount > 1:
-                return "Somehow multiple characters were updated which should be impossible."
-
-            else:
-                return f"Character {name} not found."
-
-    except sqlite3.IntegrityError as e:
-        raise e
-
-
-def sub_benny(name: str, guild: int) -> str:
-    try:
-        with conn:
-            cur = conn.cursor()
-
-            cur.execute("UPDATE characters SET bennies=bennies-1 WHERE name=? AND guild=? AND bennies > 0", (name, guild))
-
-            if cur.rowcount == 1:
-                benny_count = cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()[0]
-
-                return f"{name} benny count: {benny_count}."
-
-            elif cur.rowcount > 1:
-                return "Somehow multiple characters were updated which should be impossible."
-
-            else:
-                row =cur.execute("SELECT bennies FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()
-
-                if row is None:
-                    return f"Character {name} not found."
+                if row is not None:
+                    found_names.append(name)
+                    found_bennies.append(row[0])
                 else:
-                    return f"Character {name} has no bennies left."
+                    missing_names.append(name)
+            
+            # build the message
+            message = ""
+
+            for i in range(0, len(found_names)):
+                message += f"{found_names[i]} - {found_bennies[i]} bennies.\n"
+
+            if len(missing_names) > 0:
+                message += f"Missing characters: {", ".join(missing_names)}"
+
+            return message.rstrip()
 
     except sqlite3.IntegrityError as e:
         raise e
 
 
-def set_bennies(name: str, number: int, guild: int) -> str:
+def sub_benny(names: list[str], guild: int) -> str:
     try:
         with conn:
             cur = conn.cursor()
 
-            cur.execute("UPDATE characters SET bennies=? WHERE name=? AND guild=?", (number, name, guild))
+            # report lists
+            found_names =   []
+            found_bennies = []
+            zero_names =    []
+            missing_names = []
 
-            if cur.rowcount == 1:
-                return f"{name} benny count: {number}."
+            for name in names:
+                cur.execute("UPDATE characters SET bennies=bennies-1 WHERE name=? AND guild=? AND bennies > 0 RETURNING bennies", (name, guild))
 
-            elif cur.rowcount > 1:
-                return "Somehow multiple characters were updated which should be impossible."
+                row = cur.fetchone()
 
-            else:
-                return f"Character {name} not found."
+                if row is not None:
+                    found_names.append(name)
+                    found_bennies.append(row[0])
+                else:
+                    # check if we failed due to no name existing or zero bennies
+                    cur.execute("SELECT 1 FROM characters WHERE name=? AND guild=?", (name, guild))
+
+                    exists = cur.fetchone()
+
+                    if not exists:
+                        missing_names.append(name)
+                    else:
+                        zero_names.append(name)
+            
+            # build the message
+            message = ""
+
+            for i in range(0, len(found_names)):
+                message += f"{found_names[i]} - {found_bennies[i]} bennies.\n"
+
+            if len(zero_names) > 0:
+                message += f"Out of bennies: {", ".join(zero_names)}\n"
+
+            if len(missing_names) > 0:
+                message += f"Missing characters: {", ".join(missing_names)}"
+
+            return message.rstrip()
+
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def set_bennies(names: list[str], number: int, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+
+            # report lists
+            found_names =   []
+            missing_names = []
+
+            for name in names:
+                cur.execute("UPDATE characters SET bennies=? WHERE name=? AND guild=?", (number, name, guild))
+
+                if cur.rowcount > 0:
+                    found_names.append(name)
+                else:
+                    missing_names.append(name)
+            
+            # build the message
+            message = ""
+
+            for i in range(0, len(found_names)):
+                message += f"{found_names[i]} - {number} bennies.\n"
+
+            if len(missing_names) > 0:
+                message += f"Missing characters: {", ".join(missing_names)}"
+
+            return message.rstrip()
+
 
     except sqlite3.IntegrityError as e:
         raise e
