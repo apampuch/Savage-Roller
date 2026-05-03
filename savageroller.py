@@ -25,7 +25,18 @@ async def roll(ctx: discord.ApplicationContext, msg: str):
         roll_results = roll_savage_dice(roll_data)
         await ctx.respond(package_roll(msg, roll_data, **roll_results))  # type: ignore
     except ValueError as e:
-        await ctx.respond(e)
+        controlled = characters.get_controlled_character_for_roll(ctx.user.id, ctx.guild_id)
+        if controlled:
+            preset_roll = characters.get_preset_roll(msg, controlled, ctx.guild_id)
+            if preset_roll:
+                try:
+                    roll_data = parse_tokens(preset_roll)
+                    roll_results = roll_savage_dice(roll_data)
+                    await ctx.respond(package_roll(msg, roll_data, **roll_results))  # type: ignore
+                    return
+                except:
+                    pass
+        await ctx.respond(f"{msg} is not a valid roll.")
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
         raise
@@ -34,10 +45,10 @@ async def roll(ctx: discord.ApplicationContext, msg: str):
 
 @bot.slash_command(name="fight", description="Start a new fight")
 async def fight(ctx: discord.ApplicationContext, character_names: str):
-    chars_list = list(set(map(lambda x: x.strip(), character_names.split(','))))
+    chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = "```" + characters.fight(chars_list, ctx.guild_id, ctx.channel_id) + "```"
+        message = "```" + characters.fight_with_parties(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -52,12 +63,12 @@ async def new_round(ctx: discord.ApplicationContext):
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
-@bot.slash_command(name="deal_in", description="Deal in new characters")
+@bot.slash_command(name="deal_in", description="Deal in new characters or parties")
 async def deal_in(ctx: discord.ApplicationContext, character_names: str):
-    chars_list = list(set(map(lambda x: x.strip(), character_names.split(','))))
+    chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = "```" + characters.add_to_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
+        message = "```" + characters.add_to_initiative_with_parties(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -173,12 +184,12 @@ async def remove_edges(ctx: discord.ApplicationContext, character_name: str, edg
     except LookupError:
         await ctx.respond(f"Character {character_name} does not exist.")
 
-@bot.slash_command(name="give_benny", description="Gives a benny to a character.")
+@bot.slash_command(name="give_benny", description="Gives a benny to a character or party.")
 async def give_benny(ctx: discord.ApplicationContext, character_names: str):
     names_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = characters.give_benny(names_list, ctx.guild_id)
+        message = characters.give_benny_with_parties(names_list, ctx.guild_id)
         await ctx.respond(message)
     except LookupError:
         await ctx.respond(f"Character {character_names} does not exist.")
@@ -203,6 +214,123 @@ async def set_bennies(ctx: discord.ApplicationContext, character_names: str, num
     except LookupError:
         await ctx.respond(f"Character {character_names} does not exist.")
 
+# PARTIES
+
+@bot.slash_command(name="create_party", description="Create a new party")
+async def create_party(ctx: discord.ApplicationContext, party_name: str):
+    try:
+        message = characters.create_party(party_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="add_to_party", description="Add characters to a party")
+async def add_to_party(ctx: discord.ApplicationContext, party_name: str, character_names: str):
+    chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
+    
+    try:
+        message = characters.add_to_party(party_name, chars_list, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="remove_from_party", description="Remove characters from a party")
+async def remove_from_party(ctx: discord.ApplicationContext, party_name: str, character_names: str):
+    chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
+    
+    try:
+        message = characters.remove_from_party(party_name, chars_list, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="delete_party", description="Delete a party")
+async def delete_party(ctx: discord.ApplicationContext, party_name: str):
+    try:
+        message = characters.delete_party(party_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="party_members", description="List all members of a party")
+async def party_members(ctx: discord.ApplicationContext, party_name: str):
+    try:
+        message = characters.get_party_members(party_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="list_parties", description="List all parties in the guild")
+async def list_parties(ctx: discord.ApplicationContext):
+    try:
+        message = characters.list_parties(ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+# CHARACTER CONTROL
+
+@bot.slash_command(name="control", description="Control a character")
+async def control(ctx: discord.ApplicationContext, character_name: str):
+    try:
+        message = characters.control_character(ctx.user.id, character_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="release", description="Release control of your current character")
+async def release(ctx: discord.ApplicationContext):
+    try:
+        message = characters.release_control(ctx.user.id, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="my_character", description="View your currently controlled character")
+async def my_character(ctx: discord.ApplicationContext):
+    try:
+        message = characters.get_my_character(ctx.user.id, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+# PRESETS
+
+@bot.slash_command(name="make_preset", description="Create a preset roll for a character")
+async def make_preset(ctx: discord.ApplicationContext, preset_name: str, roll: str, character_name: str | None = None):
+    try:
+        message = characters.make_preset(ctx.user.id, preset_name, roll, ctx.guild_id, character_name)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="delete_preset", description="Delete a preset from a character")
+async def delete_preset(ctx: discord.ApplicationContext, preset_name: str, character_name: str):
+    try:
+        message = characters.delete_preset(preset_name, character_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
+
+@bot.slash_command(name="list_presets", description="List all presets for a character")
+async def list_presets(ctx: discord.ApplicationContext, character_name: str):
+    try:
+        message = characters.list_presets(character_name, ctx.guild_id)
+        await ctx.respond(message)
+    except Exception:
+        await ctx.respond("An error occurred, see the log for details.")
+        raise
 
 # BACKLASH
 
