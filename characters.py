@@ -128,6 +128,21 @@ def fight(characters: list[str], guild: int, channel: int) -> str:
         return "Made empty iniative. Add some characters."
 
 
+def fight_with_parties(names: list[str], guild: int, channel: int) -> str:
+    resolved_names = database.resolve_names_to_characters(names, guild)
+    unique_names = list(set(resolved_names))
+    
+    database.new_list(guild, channel)
+    database.insert_into_list(unique_names, guild, channel)
+    
+    chart: str = next_round(guild, channel)
+    
+    if len(unique_names) > 0:
+        return chart
+    else:
+        return "Made empty iniative. Add some characters."
+
+
 def deal_card_to_character(init_list: InitiativeList, char: Character):
     # draw one card
     char.main_card = init_list.draw_card()
@@ -253,6 +268,27 @@ def add_to_initiative(characters: list[str], guild: int, channel: int):
     return init_list.make_initiative_chart()
 
 
+def add_to_initiative_with_parties(names: list[str], guild: int, channel: int):
+    resolved_names = database.resolve_names_to_characters(names, guild)
+    unique_names = list(set(resolved_names))
+    
+    try:
+        database.insert_into_list(unique_names, guild, channel)
+    except database.NotFoundInChannelError:
+        return "No initiative list in this channel."
+
+    init_list = get_init_list(guild, channel, False)
+
+    chars = [c for c in init_list.characters if c.name in unique_names]
+
+    for char in chars:
+        deal_card_to_character(init_list, char)
+
+    init_list.update_db(guild, channel)
+    init_list.sort_characters()
+    return init_list.make_initiative_chart()
+
+
 def remove_from_initiative(characters: list[str], guild: int, channel: int):
     try:
         database.delete_from_list(characters, guild, channel)
@@ -335,6 +371,11 @@ def give_benny(names: list[str], guild: int) -> str:
     return database.add_benny(names, guild)
 
 
+def give_benny_with_parties(names: list[str], guild: int) -> str:
+    resolved_names = database.resolve_names_to_characters(names, guild)
+    return database.add_benny(resolved_names, guild)
+
+
 def take_benny(names: list[str], guild: int) -> str:
     return database.sub_benny(names, guild)
 
@@ -343,4 +384,87 @@ def set_bennies(names: list[str], number: int, guild: int) -> str:
     if number < 0:
         return "Must set to a positive number or zero."
     else:
-        return database.set_bennies(names, number, guild)
+        resolved_names = database.resolve_names_to_characters(names, guild)
+        return database.set_bennies(resolved_names, number, guild)
+
+
+def create_party(name: str, guild: int) -> str:
+    return database.create_party(name, guild)
+
+
+def add_to_party(party_name: str, character_names: list[str], guild: int) -> str:
+    return database.add_to_party(party_name, character_names, guild)
+
+
+def remove_from_party(party_name: str, character_names: list[str], guild: int) -> str:
+    return database.remove_from_party(party_name, character_names, guild)
+
+
+def delete_party(name: str, guild: int) -> str:
+    return database.delete_party(name, guild)
+
+
+def get_party_members(party_name: str, guild: int) -> str:
+    return database.get_party_members(party_name, guild)
+
+
+def list_parties(guild: int) -> str:
+    return database.list_parties(guild)
+
+
+def control_character(user_id: int, char_name: str, guild: int) -> str:
+    return database.control_character(user_id, char_name, guild)
+
+
+def release_control(user_id: int, guild: int) -> str:
+    return database.release_control(user_id, guild)
+
+
+def get_my_character(user_id: int, guild: int) -> str:
+    controlled = database.get_controlled_character(user_id, guild)
+    if not controlled:
+        return "You are not controlling a character."
+    
+    char_id, char_name = controlled
+    return database.get_character_info(char_name, guild)
+
+
+def make_preset(user_id: int, preset_name: str, roll: str, guild: int, character_name: str | None = None) -> str:
+    from die_roller import parse_tokens, roll_savage_dice
+    
+    try:
+        parse_tokens(preset_name)
+        return f"{preset_name} is a valid roll string. Name it something that isn't a valid roll."
+    except:
+        pass
+    
+    if character_name is None:
+        controlled = database.get_controlled_character(user_id, guild)
+        if not controlled:
+            return "Specify a character or control a character with `/control`."
+        character_name = controlled[1]
+    
+    try:
+        roll_data = parse_tokens(roll)
+        roll_savage_dice(roll_data)
+    except:
+        return f"Roll string {roll} is invalid."
+    
+    return database.create_preset(preset_name, character_name, roll, guild)  # type: ignore
+
+
+def delete_preset(preset_name: str, character_name: str, guild: int) -> str:
+    return database.delete_preset(preset_name, character_name, guild)
+
+
+def list_presets(char_name: str, guild: int) -> str:
+    return database.list_presets(char_name, guild)
+
+
+def get_controlled_character_for_roll(user_id: int, guild: int):
+    return database.get_controlled_character(user_id, guild)
+
+
+def get_preset_roll(preset_name: str, controlled: tuple, guild: int):
+    char_id = controlled[0]
+    return database.get_preset(preset_name, char_id)

@@ -142,6 +142,48 @@ cur.execute("""
     END;
 """)
 
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS PARTIES(
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        guild INTEGER NOT NULL,
+        UNIQUE(name, guild)
+    );
+""")
+
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS PARTY_MEMBERSHIP(
+        id INTEGER PRIMARY KEY,
+        party_id INTEGER NOT NULL,
+        char_id INTEGER NOT NULL,
+        FOREIGN KEY(party_id) REFERENCES PARTIES(id) ON DELETE CASCADE,
+        FOREIGN KEY(char_id) REFERENCES characters(id) ON DELETE CASCADE,
+        UNIQUE(party_id, char_id)
+    );
+""")
+
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS PRESET(
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        roll_string TEXT NOT NULL,
+        char_id INTEGER NOT NULL,
+        FOREIGN KEY(char_id) REFERENCES characters(id) ON DELETE CASCADE,
+        UNIQUE(name, char_id)
+    );
+""")
+
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS CONTROL(
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        char_id INTEGER NOT NULL,
+        guild INTEGER NOT NULL,
+        FOREIGN KEY(char_id) REFERENCES characters(id) ON DELETE CASCADE,
+        UNIQUE(user_id, guild)
+    );
+""")
+
 conn.commit()
 cur.close()
 
@@ -154,6 +196,12 @@ def shutdown():
 def insert_character(name: str, guild: int, temp: bool = False) -> str:
     try:
         with conn:
+            cur = conn.cursor()
+            
+            party_exists = cur.execute("SELECT 1 FROM PARTIES WHERE name=? AND guild=?", (name, guild)).fetchone()
+            if party_exists:
+                return f"Character {name} conflicts with existing party {name}."
+            
             conn.execute("""
                 INSERT INTO characters (name, guild, temp)
                 VALUES (?, ?, ?)
@@ -172,7 +220,7 @@ def delete_character(name: str, guild: int):
     try:
         with conn:
             cur = conn.cursor()
-            cur.execute("DELETE FROM characters WHERE name=? AND guild=? LIMIT 1", (name, guild))
+            cur.execute("DELETE FROM characters WHERE id = (SELECT id FROM characters WHERE name=? AND guild=? LIMIT 1)", (name, guild))
 
             if cur.rowcount == 0:
                 return f"Could not find a character named {name} to delete."
@@ -186,6 +234,10 @@ def change_char_name(character: str, new_name: str, guild: int) -> str:
     try:
         with conn:
             cur = conn.cursor()
+            
+            party_exists = cur.execute("SELECT 1 FROM PARTIES WHERE name=? AND guild=?", (new_name, guild)).fetchone()
+            if party_exists:
+                return f"Character {new_name} conflicts with existing party {new_name}."
 
             cur.execute("UPDATE characters SET name=? WHERE name=? AND guild=?", (new_name, character, guild))
 
@@ -568,5 +620,336 @@ def update_list(character_names: list[str], character_info: list[list], guild: i
                     SET main_card=?, unused_cards=?, tactician_cards=?
                     WHERE char_id=? AND init_id=?
                 """, character_info)
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def create_party(name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char_exists = cur.execute("SELECT 1 FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()
+            if char_exists:
+                return f"Party {name} conflicts with existing character {name}."
+            
+            cur.execute("INSERT INTO PARTIES (name, guild) VALUES (?, ?)", (name, guild))
+            return f"Created party {name}."
+    except sqlite3.IntegrityError as e:
+        if e.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE":
+            return f"Party {name} already exists."
+        else:
+            raise e
+
+
+def add_to_party(party_name: str, character_names: list[str], guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            party = cur.execute("SELECT id FROM PARTIES WHERE name=? AND guild=?", (party_name, guild)).fetchone()
+            if not party:
+                return f"Party {party_name} doesn't exist."
+            
+            party_id = party[0]
+            found_chars = []
+            missing_chars = []
+            
+            for char_name in character_names:
+                char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+                if char:
+                    try:
+                        cur.execute("INSERT INTO PARTY_MEMBERSHIP (party_id, char_id) VALUES (?, ?)", (party_id, char[0]))
+                        found_chars.append(char_name)
+                    except sqlite3.IntegrityError:
+                        found_chars.append(char_name)
+                else:
+                    missing_chars.append(char_name)
+            
+            message = f"Added {', '.join(found_chars)} to {party_name}." if found_chars else ""
+            if missing_chars:
+                if message:
+                    message += f"\nCharacter(s) {', '.join(missing_chars)} not found."
+                else:
+                    message = f"Character(s) {', '.join(missing_chars)} not found."
+            
+            return message
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def remove_from_party(party_name: str, character_names: list[str], guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            party = cur.execute("SELECT id FROM PARTIES WHERE name=? AND guild=?", (party_name, guild)).fetchone()
+            if not party:
+                return f"Party {party_name} doesn't exist."
+            
+            party_id = party[0]
+            found_chars = []
+            missing_chars = []
+            
+            for char_name in character_names:
+                char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+                if char:
+                    cur.execute("DELETE FROM PARTY_MEMBERSHIP WHERE party_id=? AND char_id=?", (party_id, char[0]))
+                    found_chars.append(char_name)
+                else:
+                    missing_chars.append(char_name)
+            
+            message = f"Removed {', '.join(found_chars)} from {party_name}." if found_chars else ""
+            if missing_chars:
+                if message:
+                    message += f"\nCharacter(s) {', '.join(missing_chars)} not found."
+                else:
+                    message = f"Character(s) {', '.join(missing_chars)} not found."
+            
+            return message
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def delete_party(name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM PARTIES WHERE name=? AND guild=?", (name, guild))
+            
+            if cur.rowcount == 0:
+                return f"Party {name} doesn't exist."
+            else:
+                return f"Deleted party {name}."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def get_party_members(party_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            party = cur.execute("SELECT id FROM PARTIES WHERE name=? AND guild=?", (party_name, guild)).fetchone()
+            if not party:
+                return f"Party {party_name} doesn't exist."
+            
+            members = cur.execute("""
+                SELECT c.name FROM characters c
+                JOIN PARTY_MEMBERSHIP pm ON pm.char_id = c.id
+                WHERE pm.party_id=?
+            """, (party[0],)).fetchall()
+            
+            if members:
+                return f"Members of {party_name}:\n" + "\n".join([m[0] for m in members])
+            else:
+                return f"Party {party_name} has no members."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def list_parties(guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            parties = cur.execute("SELECT name FROM PARTIES WHERE guild=?", (guild,)).fetchall()
+            
+            if parties:
+                return "Parties:\n" + "\n".join([p[0] for p in parties])
+            else:
+                return "No parties found."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def get_character_names_from_parties(party_names: list[str], guild: int) -> list[str]:
+    try:
+        with conn:
+            cur = conn.cursor()
+            all_char_names = []
+            
+            for party_name in party_names:
+                party = cur.execute("SELECT id FROM PARTIES WHERE name=? AND guild=?", (party_name, guild)).fetchone()
+                if party:
+                    members = cur.execute("""
+                        SELECT c.name FROM characters c
+                        JOIN PARTY_MEMBERSHIP pm ON pm.char_id = c.id
+                        WHERE pm.party_id=?
+                    """, (party[0],)).fetchall()
+                    all_char_names.extend([m[0] for m in members])
+            
+            return all_char_names
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def resolve_names_to_characters(names: list[str], guild: int) -> list[str]:
+    try:
+        with conn:
+            cur = conn.cursor()
+            all_char_names = []
+            
+            for name in names:
+                char = cur.execute("SELECT name FROM characters WHERE name=? AND guild=?", (name, guild)).fetchone()
+                if char:
+                    all_char_names.append(char[0])
+                else:
+                    party = cur.execute("SELECT id FROM PARTIES WHERE name=? AND guild=?", (name, guild)).fetchone()
+                    if party:
+                        members = cur.execute("""
+                            SELECT c.name FROM characters c
+                            JOIN PARTY_MEMBERSHIP pm ON pm.char_id = c.id
+                            WHERE pm.party_id=?
+                        """, (party[0],)).fetchall()
+                        all_char_names.extend([m[0] for m in members])
+            
+            return list(set(all_char_names))
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def control_character(user_id: int, char_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+            if not char:
+                return f"Character {char_name} doesn't exist."
+            
+            old_control = cur.execute("SELECT c.name FROM CONTROL ctrl JOIN characters c ON ctrl.char_id = c.id WHERE ctrl.user_id=? AND ctrl.guild=?", (user_id, guild)).fetchone()
+            
+            cur.execute("DELETE FROM CONTROL WHERE user_id=? AND guild=?", (user_id, guild))
+            cur.execute("INSERT INTO CONTROL (user_id, char_id, guild) VALUES (?, ?, ?)", (user_id, char[0], guild))
+            
+            if old_control:
+                return f"Now controlling {char_name} instead of {old_control[0]}."
+            else:
+                return f"Now controlling {char_name}."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def release_control(user_id: int, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT c.name FROM CONTROL ctrl JOIN characters c ON ctrl.char_id = c.id WHERE ctrl.user_id=? AND ctrl.guild=?", (user_id, guild)).fetchone()
+            
+            if not char:
+                return "You are not controlling a character."
+            
+            cur.execute("DELETE FROM CONTROL WHERE user_id=? AND guild=?", (user_id, guild))
+            return f"No longer controlling {char[0]}."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def get_controlled_character(user_id: int, guild: int):
+    try:
+        with conn:
+            cur = conn.cursor()
+            result = cur.execute("""
+                SELECT c.id, c.name FROM CONTROL ctrl
+                JOIN characters c ON ctrl.char_id = c.id
+                WHERE ctrl.user_id=? AND ctrl.guild=?
+            """, (user_id, guild)).fetchone()
+            return result
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def create_preset(preset_name: str, char_name: str, roll_string: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+            if not char:
+                return f"Character {char_name} doesn't exist."
+            
+            cur.execute("INSERT INTO PRESET (name, roll_string, char_id) VALUES (?, ?, ?)", (preset_name, roll_string, char[0]))
+            return f"Created preset {preset_name} for {char_name}."
+    except sqlite3.IntegrityError as e:
+        if e.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE":
+            return f"Preset {preset_name} already exists for {char_name}."
+        else:
+            raise e
+
+
+def delete_preset(preset_name: str, char_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+            if not char:
+                return f"Character {char_name} doesn't exist."
+            
+            cur.execute("DELETE FROM PRESET WHERE name=? AND char_id=?", (preset_name, char[0]))
+            
+            if cur.rowcount == 0:
+                return f"Preset {preset_name} doesn't exist on {char_name}."
+            else:
+                return f"Deleted preset {preset_name} from {char_name}."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def get_preset(preset_name: str, char_id: int):
+    try:
+        with conn:
+            cur = conn.cursor()
+            result = cur.execute("SELECT roll_string FROM PRESET WHERE name=? AND char_id=?", (preset_name, char_id)).fetchone()
+            return result[0] if result else None
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def list_presets(char_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT id FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+            if not char:
+                return f"Character {char_name} doesn't exist."
+            
+            presets = cur.execute("SELECT name, roll_string FROM PRESET WHERE char_id=?", (char[0],)).fetchall()
+            
+            if presets:
+                return f"Presets for {char_name}:\n" + "\n".join([f"{p[0]}: {p[1]}" for p in presets])
+            else:
+                return f"{char_name} has no presets."
+    except sqlite3.IntegrityError as e:
+        raise e
+
+
+def get_character_info(char_name: str, guild: int) -> str:
+    try:
+        with conn:
+            cur = conn.cursor()
+            
+            char = cur.execute("SELECT id, bennies FROM characters WHERE name=? AND guild=?", (char_name, guild)).fetchone()
+            if not char:
+                return f"Character {char_name} doesn't exist."
+            
+            char_id, bennies = char
+            
+            edges = cur.execute("SELECT edge FROM character_edges WHERE char_id=?", (char_id,)).fetchall()
+            edge_list = [e[0] for e in edges] if edges else []
+            
+            presets = cur.execute("SELECT name, roll_string FROM PRESET WHERE char_id=?", (char_id,)).fetchall()
+            
+            result = f"{char_name}\n{bennies} Bennies\nEdges: {', '.join(edge_list) if edge_list else 'None'}\nPresets:\n"
+            
+            if presets:
+                for p in presets:
+                    result += f"{p[0]}: {p[1]}\n"
+            else:
+                result += "None\n"
+            
+            return result.rstrip()
     except sqlite3.IntegrityError as e:
         raise e
