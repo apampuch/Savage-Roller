@@ -265,7 +265,7 @@ async def party_members(ctx: discord.ApplicationContext, party_name: str):
         await ctx.respond("An error occurred, see the log for details.")
         raise
 
-@bot.slash_command(name="list_parties", description="List all parties in the guild")
+@bot.slash_command(name="list_parties", description="List all parties on the server")
 async def list_parties(ctx: discord.ApplicationContext):
     try:
         message = characters.list_parties(ctx.guild_id)
