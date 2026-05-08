@@ -99,6 +99,3 @@ Party names can be used in place of characters in the following commands. You ma
 - `/deal_in`
 - `/add_bennies`
 - `/set_bennies`
-
-# Planned Features
-- Character Rolls: A way to save things like traits and damage rolls to characters. Will also have a way for a user to "control" a character and use their saved rolls.
