@@ -61,6 +61,15 @@ Edges can be removed with `remove_edges [edges]`.
 ## Bennies
 Give bennies (one at a time) with `/give_benny [characters]`. Take them with `/take_benny [characters]`. Set them to a specified amount with `/set_bennies [characters] [number]`.
 
+## Presets and Character Control
+Presets are shortcuts for named rolls. They're useful for if you don't want to remember a really long roll like `3s12w10-2`, you could instead refer to it by `/roll mylittlefriend`.
+
+Presets are assigned to specific characters. To use a preset, you have to control a character, this is done with `/control [character]`. Users can control one character at a time, using `/control` on a different character while one is already controlled releases control of the original. One character may be controlled by any number of different users on the same server. `/release` simply releases your controlled character.
+
+Add a preset to a character with `/make_preset [preset_name] [roll] [character_name]`. The last argument is semi-optional, if you're controlling a character, the bot will assume you want to add it to your currently controlled character. If you're not, you must specify a character to add the preset to. In either case, if you specify `character_name`, the preset will be added to that character regardless of which character you're controlling. `/delete_preset [preset_name] [character_name]` deletes a preset, `character_name` is optional here as described above. `/list_presets [character_name]` lists all presets belonging to a character.
+
+You may only use presets belonging to your currently controlled character. To use one, simply use its name in place of a die roll. To re-use the previous example, one could first `/control Scarface`, add a preset with `/make_preset mylittlefriend 3s12w10-2`, and then roll it with `/roll mylittlefriend`.
+
 # Initiative
 Initiative lists are per channel and server. This means that you can have multiple initiative lists per server, as long as each one is in a different channel. Most commands can take multiple names as long as they're split with commas, `/fight Lelouche, Suzaku, Karen` will add three characters to initiative: `Lelouch`, `Suzaku`, and `Karen` (leading and trailing whitespace will be stripped). On the other hand, using `/fight Lelouche Suzaku Karen` will just add one character named `Lelouche Suzaku Karen`. (This is purposefully different from the project I based this on because it personally bugged me.)
 
@@ -82,7 +91,14 @@ Level Headed and Improved Level Headed technically don't *require* you to use th
 
 Furthermore, those with both Level Headed and Quick might want to choose a card with a rank of 5 or lower if their higher card isn't particularly high, specifically to gamble for an even higher card. To do this, first select the lower card with `/choose_card`, then use `/quick_redraw [character]` to perform the redrawing function of the Quick edge. Note that this function does not actually check if the target character has the Quick edge or not, I trust that you will use this responsibly.
 
+# Parties
+Parties are groups of characters used as shorthand to perform commands on multiple characters at once. To make a party, use `/create_party [party_name]`. Party names and character names are mutually exclusive.
+Use `/add_to_party [party_name] [characters]`, listing comma-separated characters to add to the party. Note: you cannot add temporary characters to parties! Use `/remove_from_party [party_name] [characters]` to remove characters from a party. `/delete_party [party_name]` deletes a party, it does not delete the characters inside the party. `/list_parties` lists all of the parties on the server. `/party_members` lists all of the characters inside of a party.
+Party names can be used in place of characters in the following commands. You may mix and match party and character names when using these commands:
+- `/fight`
+- `/deal_in`
+- `/add_bennies`
+- `/set_bennies`
+
 # Planned Features
-- Bennies: As explained in SW.
-- Parties: Preset lists of characters that can easily be dealt in and given bennies. Will probably have to share unique names with character names.
 - Character Rolls: A way to save things like traits and damage rolls to characters. Will also have a way for a user to "control" a character and use their saved rolls.
