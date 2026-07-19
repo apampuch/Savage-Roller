@@ -10,4 +10,7 @@ node_modules/
 *.iml
 .vscode/
 *.db
+venv/
 .venv/
+test.db
+database.db
