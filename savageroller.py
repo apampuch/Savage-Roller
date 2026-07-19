@@ -48,7 +48,7 @@ async def fight(ctx: discord.ApplicationContext, character_names: str):
     chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = "```" + characters.fight_with_parties(chars_list, ctx.guild_id, ctx.channel_id) + "```"
+        message = "```" + characters.fight(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -68,7 +68,7 @@ async def deal_in(ctx: discord.ApplicationContext, character_names: str):
     chars_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = "```" + characters.add_to_initiative_with_parties(chars_list, ctx.guild_id, ctx.channel_id) + "```"
+        message = "```" + characters.add_to_initiative(chars_list, ctx.guild_id, ctx.channel_id) + "```"
         await ctx.respond(message)
     except Exception:
         await ctx.respond("An error occurred, see the log for details.")
@@ -189,7 +189,7 @@ async def give_benny(ctx: discord.ApplicationContext, character_names: str):
     names_list = list(map(lambda x: x.strip(), character_names.split(',')))
 
     try:
-        message = characters.give_benny_with_parties(names_list, ctx.guild_id)
+        message = characters.give_benny(names_list, ctx.guild_id)
         await ctx.respond(message)
     except LookupError:
         await ctx.respond(f"Character {character_names} does not exist.")

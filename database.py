@@ -783,7 +783,12 @@ def get_character_names_from_parties(party_names: list[str], guild: int) -> list
         raise e
 
 
-def resolve_names_to_characters(names: list[str], guild: int) -> list[str]:
+def resolve_names_to_characters(names: list[str], guild: int, add_name_anyway: bool = False) -> list[str]:
+    """
+    add_name_anyway: If we can't resolve the name at all, add it to all_character_names anyway.
+    This is mostly useful for when we need to add temporary characters to initiative lists.
+    """
+
     try:
         with conn:
             cur = conn.cursor()
@@ -802,6 +807,8 @@ def resolve_names_to_characters(names: list[str], guild: int) -> list[str]:
                             WHERE pm.party_id=?
                         """, (party[0],)).fetchall()
                         all_char_names.extend([m[0] for m in members])
+                    elif add_name_anyway:
+                        all_char_names.append(name)
             
             return list(set(all_char_names))
     except sqlite3.IntegrityError as e:

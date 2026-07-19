@@ -112,24 +112,8 @@ def get_init_list(guild: int, channel: int, sort_init=True) -> InitiativeList:
     return init_list
 
 
-def fight(characters: list[str], guild: int, channel: int) -> str:
-    # make a new list
-    database.new_list(guild, channel)
-
-    # add characters to it
-    database.insert_into_list(characters, guild, channel)
-
-    # deal cards to each character
-    chart: str = next_round(guild, channel)
-
-    if len(characters) > 0:
-        return chart
-    else:
-        return "Made empty iniative. Add some characters."
-
-
-def fight_with_parties(names: list[str], guild: int, channel: int) -> str:
-    resolved_names = database.resolve_names_to_characters(names, guild)
+def fight(names: list[str], guild: int, channel: int) -> str:
+    resolved_names = database.resolve_names_to_characters(names, guild, add_name_anyway=True)
     unique_names = list(set(resolved_names))
     
     database.new_list(guild, channel)
@@ -250,26 +234,8 @@ def next_round(guild: int, channel: int) -> str:
     return prepend + get_init_list(guild, channel).make_initiative_chart()
 
 
-def add_to_initiative(characters: list[str], guild: int, channel: int):
-    try:
-        database.insert_into_list(characters, guild, channel)
-    except database.NotFoundInChannelError:
-        return "No initiative list in this channel."
-
-    init_list = get_init_list(guild, channel, False)
-
-    chars = [c for c in init_list.characters if c.name in characters]
-
-    for char in chars:
-        deal_card_to_character(init_list, char)
-
-    init_list.update_db(guild, channel)
-    init_list.sort_characters()
-    return init_list.make_initiative_chart()
-
-
-def add_to_initiative_with_parties(names: list[str], guild: int, channel: int):
-    resolved_names = database.resolve_names_to_characters(names, guild)
+def add_to_initiative(names: list[str], guild: int, channel: int):
+    resolved_names = database.resolve_names_to_characters(names, guild, add_name_anyway=True)
     unique_names = list(set(resolved_names))
     
     try:
@@ -368,10 +334,6 @@ def quick_redraw(name: str, guild: int, channel: int) -> str:
 
 
 def give_benny(names: list[str], guild: int) -> str:
-    return database.add_benny(names, guild)
-
-
-def give_benny_with_parties(names: list[str], guild: int) -> str:
     resolved_names = database.resolve_names_to_characters(names, guild)
     return database.add_benny(resolved_names, guild)
 
